@@ -1,12 +1,16 @@
 <cfset PageTitle="Edmonton LRT Schedule">
 <cfset PageTitleHead="LRT Schedule" />
 
+<!--- Set the cookie not to expire --->
+<cfcookie name="dark" domain="apps.epl.ca" path="/dev/LRT" expires="never" />
+<cfcookie name="dark" domain="www2.epl.ca" path="/LRT" expires="never" />
+
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
 	<cfif url.dark IS 1>
-		<cfset session.dark=true />
+		<cfset cookie.dark=true />
 	<cfelseif url.dark IS 0>
-		<cfset session.dark=false />
+		<cfset cookie.dark=false />
 	</cfif>
 </cfif>
 
@@ -200,7 +204,7 @@
 		fill:#0A2D75;
 	}
 
-	<cfif isDefined('session.dark') and session.dark IS true>
+	<cfif isDefined('cookie.dark') and cookie.dark IS true>
 	/* Dark Mode styles for Night */
 		body {
 			background-color:#222;
@@ -477,7 +481,7 @@ $('#departLabelText').click(function(){
 </div><!--.page .w2Contents-->
 </div><!--.container .clearfix-->
 <p id="nightModeLink">
-	<cfif isDefined('session.dark') AND session.dark IS true>
+	<cfif isDefined('cookie.dark') AND cookie.dark IS true>
 		<a href="?dark=0">&#x2600; Day Mode</a>
 	<cfelse>
 		<a href="?dark=1"><!--&#x1F31C; -->Night Mode</a>
