@@ -1,5 +1,5 @@
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="false" />
+<!--- <cfsetting showdebugoutput="false" /> --->
 <cffunction name="WeekdayToNum">
 	<cfargument name="DayName" required="true" type="String">
 

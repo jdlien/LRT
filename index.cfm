@@ -4,13 +4,9 @@
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
 	<cfif url.dark IS 1>
-		<cfcookie name="dark" value="true" domain="www2.epl.ca" path="/LRT" expires="never" />
-		<cfcookie name="dark" value="true" domain="apps.epl.ca" path="/dev/LRT" expires="never" />
-		<cfset cookie.dark=true />
+		<cfcookie name="lrt_dark" value="true" expires="never" />
 	<cfelseif url.dark IS 0>
-		<cfcookie name="dark" value="false" domain="www2.epl.ca" path="/LRT" expires="never" />
-		<cfcookie name="dark" value="false" domain="apps.epl.ca" path="/dev/LRT" expires="never" />		
-		<cfset cookie.dark=false />
+		<cfcookie name="lrt_dark" value="false" expires="never" />
 	</cfif>
 </cfif>
 
@@ -118,8 +114,8 @@
 	}
 
 	#swapButtonLabel {
-		padding-top:14px;
-		margin-bottom:11px;
+		padding-top:18px;
+		margin-bottom:8px;
 	}
 
 	#swapFromTo {
@@ -198,13 +194,14 @@
 
 	#geoIcon {
 		width:13px;
+		height:12px;
 	}
 
 	#geoIcon path {
 		fill:#0A2D75;
 	}
 
-	<cfif isDefined('cookie.dark') and cookie.dark IS true>
+	<cfif isDefined('cookie.lrt_dark') and cookie.lrt_dark IS true>
 	/* Dark Mode styles for Night */
 		body {
 			background-color:#222;
@@ -242,6 +239,7 @@
 			color:white;
 			background-color:black;
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
+			border:1px solid #999;
 		}
 
 		input {
@@ -251,6 +249,7 @@
 
 		input[type="button"] {
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
+			border:1px solid #999
 		}
 
 		.due {
@@ -481,7 +480,7 @@ $('#departLabelText').click(function(){
 </div><!--.page .w2Contents-->
 </div><!--.container .clearfix-->
 <p id="nightModeLink">
-	<cfif isDefined('cookie.dark') AND cookie.dark IS true>
+	<cfif isDefined('cookie.lrt_dark') AND cookie.lrt_dark IS true>
 		<a href="?dark=0">&#x2600; Day Mode</a>
 	<cfelse>
 		<a href="?dark=1"><!--&#x1F31C; -->Night Mode</a>
