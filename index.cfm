@@ -1,15 +1,15 @@
 <cfset PageTitle="Edmonton LRT Schedule">
 <cfset PageTitleHead="LRT Schedule" />
 
-<!--- Set the cookie not to expire --->
-<cfcookie name="dark" domain="apps.epl.ca" path="/dev/LRT" expires="never" />
-<cfcookie name="dark" domain="www2.epl.ca" path="/LRT" expires="never" />
-
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
 	<cfif url.dark IS 1>
+		<cfcookie name="dark" value="true" domain="www2.epl.ca" path="/LRT" expires="never" />
+		<cfcookie name="dark" value="true" domain="apps.epl.ca" path="/dev/LRT" expires="never" />
 		<cfset cookie.dark=true />
 	<cfelseif url.dark IS 0>
+		<cfcookie name="dark" value="false" domain="www2.epl.ca" path="/LRT" expires="never" />
+		<cfcookie name="dark" value="false" domain="apps.epl.ca" path="/dev/LRT" expires="never" />		
 		<cfset cookie.dark=false />
 	</cfif>
 </cfif>
