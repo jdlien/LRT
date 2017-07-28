@@ -20,7 +20,7 @@
 
 <cfif url.from IS url.to>
 	<p class="error">You have selected the same station for your source and destination.<br />Please select a different station.</p>
-	<cfabort />
+	<cfset skipCalc = true />
 </cfif>
 
 <!--- Information about relevant stations --->
@@ -80,8 +80,7 @@ where that station is the end of the first trip and the start of the second --->
 
 	<cfelse>
 		<p class="error">You have chosen two stations with no connection between them.</p>
-		<cfinclude template="/w2Footer.cfm">
-		<cfabort />
+		<cfset skipCalc = true />
 	</cfif>
 
 </cfif>
@@ -91,7 +90,7 @@ where that station is the end of the first trip and the start of the second --->
 
 
 
-<!--- Well, I suppose I'll need some kind of query. --->
+<cfif NOT isDefined('skipCalc')>
 
 <!--- Step 1. Figure out the direction we need to go and the difference between our stations and the root --->
 <cfset relTravelTime = toStation.CostFromOrigin-cost />
@@ -352,5 +351,7 @@ where that station is the end of the first trip and the start of the second --->
 
 </cfif><!---isDefined('url.from2') AND isDefined('url.to2')--->
 
+
+</cfif><!--- NOT isDefined('skipCalc')--->
 
 </cfif><!---isDefined('url.from') AND isDefined('url.to')--->

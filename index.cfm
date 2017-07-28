@@ -21,6 +21,9 @@
 	<meta charset="UTF-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0" />
 	<script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+	<!--- Geo calculation stuff --->
+	<script defer src="latlon-spherical.min.js"></script>
+    <script defer src="dms.min.js"></script>
 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
 	<link rel="icon" type="image/png" href="/favicon.png" />
@@ -73,14 +76,14 @@
 		padding-top:5px;
 	}
 
-	#timeLabelText {
+	#timeLabelText, #departLabelText {
 		text-align: left;
 		margin-top:5px;
 		color:black;
 		text-decoration: none;
 	}
 
-	#nowLink {
+	#nowLink, #nearestLink {
 		font-size:13px;
 		text-decoration: underline;
 		color:#0A2D75;
@@ -91,6 +94,10 @@
 		<cfelse>
 		display:none;
 		</cfif>
+	}
+	
+	#nearestLink {
+		display:none;
 	}
 
 	.departures {
@@ -128,6 +135,11 @@
 	}
 
 	@media (max-width: 450px) {
+		#nearestLink {
+			display:inline;
+			margin-left:10px;
+		}
+
 		.pageTitle {
 			text-align: center;
 		}
@@ -180,6 +192,13 @@
 		font-weight:bold;
 	}
 
+	#geoIcon {
+		width:15px;
+	}
+
+	#geoIcon path {
+		fill:#0A2D75;
+	}
 
 	<cfif isDefined('session.dark') and session.dark IS true>
 	/* Dark Mode styles for Night */
@@ -188,15 +207,16 @@
 			color:#ccc;
 		}
 		
-		.pageTitle, #nowLink {
+		.pageTitle, #nowLink, #nearestLink {
 			color:rgb(126, 164, 241);
 		}
+
 
 		.w2Contents {
 			background-color:#111;
 		}
 
-		#timeLabelText {
+		#timeLabelText, #departLabelText {
 			color:#ccc;
 		}
 
@@ -252,7 +272,7 @@
 
 <form class="w2Form" id="fromToForm">
 
-<label for="from" style="margin-bottom:0;">Departing From
+<label for="from" style="margin-bottom:0;"><a href="javascript:void(0);" id="departLabelText" title="Click to set based on your location">Departing From <span id="nearestLink">Set Nearest</span> <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg></a>
 	<select name="from" id="from">
 		<cfoutput query="Stations">
 			<option value="#StationID#" <cfif isDefined('url.from') AND url.from IS StationID>selected</cfif>>#StationName#</option>
@@ -389,6 +409,58 @@ function updateArrivalTimes() {
 // Show some kind of countdown - minutes and seconds until arrival
 updateArrivalTimes();
 setInterval(function(){updateArrivalTimes();}, 2000);
+
+// Create JS object of station coords with coldfusion query loop
+var stationCoords = [
+<cfset c=0><cfoutput query="Stations">
+<cfif c>,</cfif>{id:#StationID#<cfloop list="#coordinates#" index="i">, <cfif c++ MOD 2 IS 0>lat<cfelse>lon</cfif>:#trim(i)#</cfloop>}
+</cfoutput>];
+
+
+// Experimental calculation of distance from stations
+function geoDistance(lat1, lon1, lat2, lon2) {
+    var p1 = new LatLon(Dms.parseDMS(lat1), Dms.parseDMS(lon1));
+    var p2 = new LatLon(Dms.parseDMS(lat2), Dms.parseDMS(lon2));
+    var dist = parseFloat(p1.distanceTo(p2).toPrecision(4));
+    return dist;
+}
+
+
+function setNearestStation() {
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(findClosestStation);
+    }
+}
+
+function findClosestStation(position) {
+    var userLat = position.coords.latitude;
+    var userLon = position.coords.longitude;
+
+    var closestStation="";
+    // Default to about the furthest point on earth in meters 21,000 km
+    var closestDistance="21000000";
+
+	// Loop through all stations 
+	stationCoords.forEach(function(station){
+		var dist=geoDistance(userLat, userLon, station.lat, station.lon);
+		if (dist < closestDistance) {
+			closestDistance=dist;
+			closestStation=station.id;
+		}
+	});
+	// If the user's closest station is the one they had set as their destination,
+	// I'm going to assume they want to go back to where they came from.
+	// This has to be more useful than having from and to be the same
+	if ($('#to').val() == closestStation) {
+		$('#to').val($('#from').val());
+	}
+	$('#from').val(closestStation).trigger('change');
+}
+
+$('#departLabelText').click(function(){
+	setNearestStation();
+});
+
 
 
 </script>
