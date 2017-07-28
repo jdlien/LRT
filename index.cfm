@@ -59,6 +59,10 @@
 
 
 <style>
+	select {
+		/*-webkit-appearance:none;*/
+		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
+	}
 
 	.w2Form input, .w2Form textarea, .w2Form select {
     	font-size: 16px;
@@ -120,7 +124,7 @@
 
 	#swapFromTo {
 		font-size:14px;
-		padding:0px;
+		padding:1px 2px 2px 2px;
 	}
 
 	#nightModeLink {
@@ -149,7 +153,7 @@
 
 		#swapFromTo {
 			width:50%;
-			padding:0 20px;
+			padding:1px 10px 2px 10px;
 		}
 
 	#swapButtonLabel {
@@ -235,7 +239,7 @@
 
 		select {
 			/*-webkit-appearance:none;*/
-			padding:3px; /* Needed for mobile safari to make the dropdowns not too tiny */
+			padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 			color:white;
 			background-color:black;
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
