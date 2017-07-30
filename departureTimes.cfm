@@ -162,7 +162,7 @@ where that station is the end of the first trip and the start of the second --->
 		AND #DOW#=1
 		AND DepartureTime >= CAST(DATEADD(minute, -ABS(#Cost#-s.CostFromOrigin), '#CurrentTime#') AS TIME)
 		<!--- Skip this AND if it's After 11. If DateCompare is LT 1, it's before 11 PM --->
-		<cfif DateCompare(CurrentTime, '23:00') LT 0>
+		<cfif DateCompare(CurrentTime, '22:50') LT 0>
 			AND DepartureTime <= CAST(DATEADD(minute, -ABS(#Cost#-s.CostFromOrigin), '#MaxFutureTime#') AS TIME)
 		</cfif>
 		ORDER BY DepartureFromCurrentStationDT
@@ -207,7 +207,7 @@ where that station is the end of the first trip and the start of the second --->
 		</tr>
 	</cfoutput>
 	<!--- If It's after 11 PM, show the departure times after midnight. I'm not sure if this works. --->
-	<cfif DateCompare(CurrentTime, '23:00') GTE 0>
+	<cfif DateCompare(CurrentTime, '22:57') GTE 0>
 	<!--- <cfif DepartureTimesLate.RecordCount><tr><td colspan="3"><b>Midnight</b></td></tr></cfif> --->
 	<cfoutput query="DepartureTimesLate">
 		<tr>
@@ -296,7 +296,7 @@ where that station is the end of the first trip and the start of the second --->
 		AND #DOW#=1
 		AND DepartureTime >= CAST(DATEADD(minute, -ABS(#Cost#-s.CostFromOrigin), '#CurrentTime#') AS TIME)
 		<!--- Skip this AND if it's After 11. If DateCompare is LT 1, it's before 11 PM --->
-		<cfif DateCompare(CurrentTime, '23:00') LT 0>
+		<cfif DateCompare(CurrentTime, '22:50') LT 0>
 			AND DepartureTime <= CAST(DATEADD(minute, -ABS(#Cost#-s.CostFromOrigin), '#MaxFutureTime#') AS TIME)
 		</cfif>
 		ORDER BY DepartureFromCurrentStationDT
@@ -338,7 +338,7 @@ where that station is the end of the first trip and the start of the second --->
 		</tr>
 	</cfoutput>
 	<!--- If It's after 11 PM, show the departure times after midnight. I'm not sure if this works. --->
-	<cfif DateCompare(CurrentTime, '23:00') GTE 0>
+	<cfif DateCompare(CurrentTime, '22:57') GTE 0>
 	<cfif DepartureTimesLate.RecordCount><tr><td><b>Midnight</b></td></tr></cfif>
 	<cfoutput query="DepartureTimesLate">
 		<tr>
