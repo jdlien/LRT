@@ -1,5 +1,3 @@
-<!--- Loaded via ajax or include to show departureTimes table --->
-<!--- <cfsetting showdebugoutput="false" /> --->
 <cffunction name="WeekdayToNum">
 	<cfargument name="DayName" required="true" type="String">
 
@@ -13,6 +11,8 @@
 		<cfcase value="Sat"><cfreturn 7></cfcase>
 	</cfswitch>
 </cffunction>
+<!--- Loaded via ajax or include to show departureTimes table --->
+<!--- <cfsetting showdebugoutput="false" /> --->
 
 <cfset maxDepartureMins = 70 />
 
@@ -107,20 +107,25 @@ where that station is the end of the first trip and the start of the second --->
 	<!--- Sunday is 1, Saturday is 7 --->
 	<cfif isDefined('url.dow') AND len(url.dow) GTE 3>
 		<cfset DOW = Left(url.dow, 3)>
+	<cfelseif isDefined('url.time') and len(url.time) GTE 3>
+		<!--- Create date object using current date --->
+		<cfset specifiedDateTime = CreateDateTime(Year(Now()), Month(Now()), Day(Now()), TimeFormat(url.time, "HH"), TimeFormat(url.time, "mm"), 0 ) >
+		<cfset DOW = Left(DayOfWeekAsString(DayOfWeek(DateAdd("n", -3, specifiedDateTime))),3)>
 	<cfelse>
-		<cfset DOW = Left(DayOfWeekAsString(DayOfWeek(Now())),3)>
+		<cfset DOW = Left(DayOfWeekAsString(DayOfWeek(DateAdd("n", -3, Now()))),3)>
 	</cfif>
-
-	<cfset  NextDOW = Left(DayOfWeekAsString(DayOfWeek(WeekdayToNum(DOW)+1 MOD 7)),3)>
 
 	<!--- I'm going to subtract two minutes to account for trains being a little late --->
 	<cfif isDefined('url.time') and len(url.time) GTE 3>
 		<!--- Reduce selected time by three minutes (gets around midnight bug) --->
 		<cfset CurrentTime=TimeFormat(DateAdd("n", -3, url.time), "HH:mm")>
+
 	<cfelse>
 		<cfset CurrentTime = TimeFormat(DateAdd("n", -3, Now()), "HH:mm")>
 	</cfif>
 	<cfset MaxFutureTime = TimeFormat(DateAdd("n", maxDepartureMins, CurrentTime), "HH:mm") >
+
+	<cfset  NextDOW = Left(DayOfWeekAsString(DayOfWeek(WeekdayToNum(DOW)+1 MOD 7)),3)>
 
 	<!--- Determine the origin station. What station is also on this line with the smallest cost --->
 	<!--- If we are going in an increasing direction, we want to find stations with a smaller cost on this line --->

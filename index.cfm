@@ -388,7 +388,7 @@ function updateArrivalTimes() {
 		var date1 = new Date(thisDate)
 		var dateNow = new Date();
 		var day = 1;
-		if (dateNow.getHours() < 4) day++;
+		// if (dateNow.getHours() < 4) day++;
 		var date2 = new Date("1900/01/"+day+" "+dateNow.getHours()+":"+dateNow.getMinutes()+":"+dateNow.getSeconds())
 
 		var secondsToDeparture = (date1-date2)/1000;
@@ -419,6 +419,9 @@ function updateArrivalTimes() {
 
 		if (secondsToDeparture < -60) timeString = '<span class="gone">Departed</span>';
 		
+		// Don't bother showing the timeString if we're not looking at the current day, since it's pretty irrelevant
+		// and likely to just be wrong anyways.
+		if ($('#dow').val().length > 0) timeString = "";
 		// $(this).next().html(secondsToDeparture);
 		$(this).next().html(timeString);
 
