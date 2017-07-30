@@ -393,6 +393,14 @@ function updateArrivalTimes() {
 
 		var secondsToDeparture = (date1-date2)/1000;
 
+		// Trying to fix the "Departed" bug that occurs around midnight
+		// If the current time is between 00:00 and 04:00, and the secondsToDeparture is more than 22.5 hours ago,
+		// increase that by a day.
+		if (dateNow.getHours() < 4 && secondsToDeparture < -22.5*3600) {
+			// Add a day to put this into the future
+			secondsToDeparture+=(24*3600);
+		}
+
 		// Now insert the seconds into the other field
 		var timeString = Math.floor(secondsToDeparture/60) + " min"
 		// if (Math.floor(secondsToDeparture/60) != 1) timeString+="s";
