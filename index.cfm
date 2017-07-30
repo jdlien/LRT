@@ -310,7 +310,8 @@
 		<cfloop from="5" to="23" index="hour"><cfoutput>
 			<option value="#hour#:00" <cfif isDefined('url.time') AND url.time IS "#hour#:00">selected</cfif>>#timeFormat(hour&":00", "h:mm tt")#</option>
 		</cfoutput></cfloop>
-		<option value="00:00" <cfif isDefined('url.time') AND url.time IS "00:00">selected</cfif>>11:59 PM</option>
+		<!--- This special option ensures we are using the same day to prevent ambiguity --->
+		<option value="23:59" <cfif isDefined('url.time') AND url.time IS "23:59">selected</cfif>>11:59 PM</option>
 	</select>
 
 	<select name="dow" id="dow" style="width:50%">
