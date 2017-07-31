@@ -76,6 +76,14 @@
     	/*line-height:2.5em;*/
 	}
 
+	.leg {
+		margin-bottom:1px;
+	}
+	
+	.trainsFromTo {
+		margin:8px 0px 4px 0px;
+	}
+
 	div#timeLabel {
 		padding-top:5px;
 	}
@@ -119,7 +127,7 @@
 
 	#swapButtonLabel {
 		padding-top:18px;
-		margin-bottom:8px;
+		margin-bottom:12px;
 	}
 
 	#swapFromTo {
@@ -307,6 +315,7 @@
 	<span class="formGroup" id="timeGroup">
 	<select name="time" id="time" style="width:calc(50% - 15px);margin-right:10px">
 		<option value="">Now</option>
+		<!--- <option value="1:00" <cfif isDefined('url.time') AND url.time IS "1:00">selected</cfif>>1:00 AM</option> --->
 		<cfloop from="5" to="23" index="hour"><cfoutput>
 			<option value="#hour#:00" <cfif isDefined('url.time') AND url.time IS "#hour#:00">selected</cfif>>#timeFormat(hour&":00", "h:mm tt")#</option>
 		</cfoutput></cfloop>
@@ -389,18 +398,9 @@ function updateArrivalTimes() {
 		var date1 = new Date(thisDate)
 		var dateNow = new Date();
 		var day = 1;
-		// if (dateNow.getHours() < 4) day++;
-		var date2 = new Date("1900/01/"+day+" "+dateNow.getHours()+":"+dateNow.getMinutes()+":"+dateNow.getSeconds())
 
-		var secondsToDeparture = (date1-date2)/1000;
 
-		// Trying to fix the "Departed" bug that occurs around midnight
-		// If the current time is between 00:00 and 04:00, and the secondsToDeparture is more than 22.5 hours ago,
-		// increase that by a day.
-		if (dateNow.getHours() < 4 && secondsToDeparture < -22.5*3600) {
-			// Add a day to put this into the future
-			secondsToDeparture+=(24*3600);
-		}
+		var secondsToDeparture = (date1-dateNow)/1000;
 
 		// Now insert the seconds into the other field
 		var timeString = Math.floor(secondsToDeparture/60) + " min"
@@ -422,7 +422,7 @@ function updateArrivalTimes() {
 		
 		// Don't bother showing the timeString if we're not looking at the current day, since it's pretty irrelevant
 		// and likely to just be wrong anyways.
-		if ($('#dow').val().length > 0) timeString = "";
+		// if ($('#dow').val().length > 0) timeString = "";
 		// $(this).next().html(secondsToDeparture);
 		$(this).next().html(timeString);
 
