@@ -172,10 +172,40 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 	ORDER BY DepartureFromCurrentStationDT
 	</cfquery>
 
-	<!--- <cfdump var="#DepartureTimes#" /> --->
+	<!--- For Debugging/Testing --->
+	<cfif isDefined("url.debug")>
+	<span class="timeStamp">
+		<cfoutput><b>CurrentTime: </b>#dateFormat(CurrentTime, "Ddd Mmm dd")# #timeFormat(CurrentTime, "HH:mm")#</cfoutput>
+	</span>
+	<table class="debug altColors">
+		<tr>
+			<th>Cost</th>
+			<th>CurStnDprtDT</th>
+			<th>Dprt</th>
+			<th colspan="7">Days</th>
+			<th>Dest Stn</th>
+			<th>Source Stn</th>
+		</tr>
+		<cfoutput query="DepartureTimes">
+			<tr>
+				<td>#CostFromOrigin#</td>
+				<td>#DateFormat(DepartureFromCurrentStationDT, "Ddd mmm, dd")# #TimeFormat(DepartureFromCurrentStationDT, "HH:mm")#</td>
+				<td>#TimeFormat(DepartureTime, "HH:mm")#</td>
+				<td class="dowCell"><cfif Mon>M<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Tue>Tu<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Wed>W<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Thu>Th<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Fri>F<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Sat>Sa<cfelse>_</cfif></td>
+				<td class="dowCell"><cfif Sun>Su<cfelse>_</cfif></td>
+				<td>#DestStationCode#</td>
+				<td>#StationCode#</td>
+			</tr>
+		</cfoutput>
+	</table>
+	</cfif>
 
-	<!--- <span class="timeStamp"><cfoutput>#dateFormat(CurrentTime, "Ddd Mmm dd")# #timeFormat(CurrentTime, "HH:mm")#</cfoutput></span> --->
-	
+
 	<div class="trainsFromTo">Trains from <cfoutput>#fromStation.StationName# to <span class="nowrap">#toStation.StationName#</span></cfoutput>:</div>
 	<table class="altColors">
 	<cfoutput query="DepartureTimes">

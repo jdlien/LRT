@@ -280,8 +280,28 @@
 			font-size:11px;
 		}
 
-		.cfdump_query td, .cfdump_query th {
+		.cfdump_query td {
 			padding:0;
+			font-size:11px !important;
+			white-space:nowrap;
+		}
+
+		.cfdump_query tr[bgcolor="eeaaaa"] td {
+			padding:0;
+			font-size:9px !important;
+		}
+		.debug {
+			border:1px solid gray;
+			border-collapse:collapse;
+		}
+
+		.debug td {
+			border:1px solid gray;	
+		}
+
+		.dowCell {
+			padding:0 2px!important;
+			text-align: center;
 		}
 	</cfif>
 
