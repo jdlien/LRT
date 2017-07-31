@@ -174,7 +174,8 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 
 	<!--- <cfdump var="#DepartureTimes#" /> --->
 
-	<span class="timeStamp"><cfoutput>#dateFormat(CurrentTime, "Ddd Mmm dd")# #timeFormat(CurrentTime, "HH:mm")#</cfoutput></span>	
+	<!--- <span class="timeStamp"><cfoutput>#dateFormat(CurrentTime, "Ddd Mmm dd")# #timeFormat(CurrentTime, "HH:mm")#</cfoutput></span> --->
+	
 	<div class="trainsFromTo">Trains from <cfoutput>#fromStation.StationName# to <span class="nowrap">#toStation.StationName#</span></cfoutput>:</div>
 	<table class="altColors">
 	<cfoutput query="DepartureTimes">
