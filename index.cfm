@@ -126,7 +126,7 @@
 	}
 
 	#swapButtonLabel {
-		padding-top:18px;
+		padding-top:20px;
 		margin-bottom:12px;
 	}
 
@@ -273,7 +273,16 @@
 
 		#geoIcon path {
 			fill:rgb(126, 164, 241);
-		}		
+		}
+
+		.cfdump_query {
+			color:black;
+			font-size:11px;
+		}
+
+		.cfdump_query td, .cfdump_query th {
+			padding:0;
+		}
 	</cfif>
 
 </style>

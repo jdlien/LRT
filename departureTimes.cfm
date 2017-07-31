@@ -1,6 +1,6 @@
 
 <!--- Simple function that accepts a weekday (2 or more letters) and returns the coldfusion weekday integer --->
-<cffunction name="weekdayToNum">
+<cffunction name="weekdayToNum" returntype="numeric">
 	<cfargument name="DayName" required="true" type="String">
 	<!--- If passed an int, just return it --->
 	<cfif isNumeric(DayName)><cfreturn DayName></cfif>
@@ -118,16 +118,23 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 		(SELECT StationID FROM vsd.EZLRTStationsLines WHERE StationID=s.StationID AND LineID IN (#ValueList(validLines.LineID)#))
 	</cfquery>
 
+	<!--- If the date is just before midnight, then we leave the "yesterday" section to the same date
+		and let the travel time wrap it to the next day
+		 If the date is after midnight, we set it back one day --->
+	<cfif Hour(CurrentTime) GTE 21>
+		<cfset dateAdjust = 0>
+	<cfelse>
+		<cfset dateAdjust = -1>
+	</cfif>
+
 	<!--- Query that should show the relevant schedule times. --->
 	<cfquery name="DepartureTimes" dbtype="ODBC" datasource="SecureSource">
 		SELECT
-		CAST(DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime) AS TIME)
-			AS DepartureFromCurrentStation,
 		CASE -- This glorious CASE will create a proper date out of the schedule times
 		WHEN DepartureTime > DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime) THEN --Yesterday
-				DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), CAST('#DateFormat(DateAdd("d", -1, CurrentTime), "YYYY-MM-DD")# '+LEFT(CONVERT(CHAR, DepartureTime),10) AS DATETIME))
+				DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), CAST('#DateFormat(DateAdd("d", dateAdjust, CurrentTime), "YYYY-MM-DD")# '+LEFT(CONVERT(CHAR, DepartureTime),10) AS DATETIME))
 		-- Must change this when changing NextDOW
-		WHEN DATEPART(hh, DepartureTime)+21 <= DATEPART(hh, #CurrentTime#)
+		WHEN DATEPART(hh, DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime))+21 <= DATEPART(hh, #CurrentTime#)
 			THEN --Tomorrow
 			DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), CAST('#DateFormat(DateAdd("d", 1, CurrentTime), "YYYY-MM-DD")# '+LEFT(CONVERT(CHAR, DepartureTime),10) AS DATETIME))	
 		ELSE --TODAY
@@ -149,16 +156,16 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			AND DepartureTime >= '22:57'
 		)
 		-- If departure time is less than 21 hours before current time, we assume it's the next day since we don't ever count backwards
-		-- Nothing I do to this clause seems to want to show trains that left after 1 AM if we're looking at the previous day
-		OR (#NextDOW# = CASE WHEN DATEPART(hh, DepartureTime)+21 <= DATEPART(hh, #CurrentTime#) THEN 1 END
-			AND DepartureTime < '04:57'
+		-- Keep in mind that there's a parallel WHEN in the list of select fields that needs to be changed if this changes
+		OR (#NextDOW# = CASE WHEN DATEPART(hh, DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime))+21 <= DATEPART(hh, #CurrentTime#) THEN 1 END
+			AND (DepartureTime < '04:57' OR DepartureTime > '23:00')
 		)
 		-- Normal case - the date of departure is greater than or equal to currenttime.
 		OR  (#CurDow# = 1
-			AND DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime) >= #CurrentTime#
+			AND DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime) >= CAST(#CurrentTime# AS TIME)
 			<!--- Only use this if the FutureTime didn't wrap to the next day. Otherwise show to end of day --->
 			<cfif Hour(MaxFutureTime) GTE Hour(CurrentTime)>
-				AND DATEADD(minute, ABS(#Cost#-s.CostFromOrigin), DepartureTime) <= #MaxFutureTime#
+				AND DepartureTime <= CAST(DATEADD(minute, -ABS(#Cost#-s.CostFromOrigin), #MaxFutureTime#) AS TIME)
 			</cfif>
 		)
 	)
@@ -167,6 +174,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 
 	<!--- <cfdump var="#DepartureTimes#" /> --->
 
+	<span class="timeStamp"><cfoutput>#dateFormat(CurrentTime, "Ddd Mmm dd")# #timeFormat(CurrentTime, "HH:mm")#</cfoutput></span>	
 	<div class="trainsFromTo">Trains from <cfoutput>#fromStation.StationName# to <span class="nowrap">#toStation.StationName#</span></cfoutput>:</div>
 	<table class="altColors">
 	<cfoutput query="DepartureTimes">
@@ -174,7 +182,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 		<cfif DateCompare(DepartureFromCurrentStationDT, CurrentTime) GTE 0>
 			<tr>
 				<td class="trainName">#UCase(DestStationCode)#</td>
-				<td class="arrivalTime" data-datetime="#DepartureFromCurrentStationDT#">#TimeFormat(DepartureFromCurrentStation, "h:mm tt")#</td>
+				<td class="arrivalTime" data-datetime="#DepartureFromCurrentStationDT#">#TimeFormat(DepartureFromCurrentStationDT, "h:mm tt")#</td>
 				<td class="countdown"></td>
 			</tr>
 		</cfif>
