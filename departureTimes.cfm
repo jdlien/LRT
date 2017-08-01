@@ -205,10 +205,23 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 	</table>
 	</cfif>
 
-
-	<div class="trainsFromTo">Trains from <cfoutput>#fromStation.StationName# to <span class="nowrap">#toStation.StationName#</span></cfoutput>:</div>
+	<cfoutput>
+	<!---
+	<div class="trainsFromTo">
+		<div class="tripTime">Trip time is about <b>#abs(relTravelTime)# minutes</b></div>
+	</div>
+	--->
+	
 	<table class="altColors">
-	<cfoutput query="DepartureTimes">
+	<thead>
+		<tr>
+			<th colspan="3">Departures from #fromStation.StationCode# <span class="nowrap">to #toStation.StationCode#</span><!-- after #TimeFormat(CurrentTime, "h:mm tt")#-->
+			<div class="tripTime">Trip time is about <b>#abs(relTravelTime)# minutes</b></div>
+			</th></tr>
+		</tr>
+	</thead>
+	<tbody>
+	<cfloop query="DepartureTimes">
 		<!--- Only show if the time hasn't elapsed --->
 		<cfif DateCompare(DepartureFromCurrentStationDT, CurrentTime) GTE 0>
 			<tr>
@@ -217,10 +230,11 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 				<td class="countdown"></td>
 			</tr>
 		</cfif>
-	</cfoutput>
+	</cfloop>
+	</tbody>
 	</table>
+	</cfoutput>
 
-	<p>The travel time for this trip will be about <b><cfoutput>#abs(relTravelTime)# minutes</cfoutput></b>.<br />
 
 	<!--- Set this for the next call to departureTimes - it will then start with the first time from the last query plus the travel time, minus a two minute fudge factor --->
 	<cfif isDefined('DepartureTimes.DepartureFromCurrentStationDT') AND isDate(DepartureTimes.DepartureFromCurrentStationDT)>

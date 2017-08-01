@@ -91,8 +91,15 @@
 	}
 	
 	.trainsFromTo {
-		margin:8px 0px 4px 0px;
+		margin:8px 0px 6px 0px;
+		font-size:18px;
+		text-align:center;
 	}
+	.tripTime {
+		margin-top:2px;
+		font-weight:normal;
+		font-size:17px;
+	}	
 
 	div#timeLabel {
 		padding-top:5px;
@@ -122,12 +129,28 @@
 		display:none;
 	}
 
+
 	.departures {
 		margin-top:20px;
+		max-width:400px;
 	}
+
 
 	.departures table {
 		margin:0;
+		font-size:17px;
+	}
+
+	.departures table thead th {
+		padding:3px 3px;
+		font-size:15px;
+		/*color:#555;*/
+		/*opacity:0.5;*/
+		/*font-weight:normal;*/
+		background-color: rgb(236, 236, 236);
+	}
+
+	.departures table td {
 		font-size:17px;
 	}
 
@@ -136,7 +159,7 @@
 	}
 
 	#swapButtonLabel {
-		padding-top:19px;
+		margin-top:5px;
 		margin-bottom:14px;
 	}
 
@@ -198,6 +221,7 @@
 	.arrivalTime,
 	.countdown {
 		min-width:80px;
+		white-space:nowrap;
 	}
 
 	.arrivalTime {
@@ -245,6 +269,10 @@
 
 		.altRow {
 			background-color: rgb(40, 40, 40);
+		}
+		.departures table thead th {
+			/*color:#888;*/
+			background-color:rgb(40, 40, 40);
 		}
 
 		.altColors tr:nth-child(even){
