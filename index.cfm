@@ -64,8 +64,18 @@
 		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 	}
 
-	.w2Form input, .w2Form textarea, .w2Form select {
+	.w2Form input,
+	.w2Form button,
+	.w2Form textarea,
+	.w2Form select {
     	font-size: 16px;
+    	border:1px solid #555;
+	}
+
+	input[type="button"], button {
+		border: solid 1px black;
+		border-radius:5px;
+		background-image:linear-gradient(to bottom, rgba(255,255,255,1) 0%,rgba(220,220,220,1) 100%);
 	}
 
 	.pageTitle {
@@ -126,12 +136,12 @@
 	}
 
 	#swapButtonLabel {
-		padding-top:20px;
-		margin-bottom:12px;
+		padding-top:19px;
+		margin-bottom:14px;
 	}
 
 	#swapFromTo {
-		font-size:14px;
+		font-size:13px;
 		padding:1px 2px 2px 2px;
 	}
 
@@ -245,23 +255,28 @@
 			background-color:rgb(0, 0, 0);
 		}
 
+		.w2Form input,
+		.w2Form button,
+		.w2Form textarea,
+		.w2Form select {
+	    	border:1px solid #888;
+		}
+
 		select {
 			/*-webkit-appearance:none;*/
 			padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 			color:white;
 			background-color:black;
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
-			border:1px solid #999;
 		}
 
-		input {
+		input, button {
 			background-color:black;
 			color:#ddd;
 		}
 
-		input[type="button"] {
+		input[type="button"], button {
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
-			border:1px solid #999
 		}
 
 		.due {
@@ -275,21 +290,6 @@
 			fill:rgb(126, 164, 241);
 		}
 
-		.cfdump_query {
-			color:black;
-			font-size:11px;
-		}
-
-		.cfdump_query td {
-			padding:0;
-			font-size:11px !important;
-			white-space:nowrap;
-		}
-
-		.cfdump_query tr[bgcolor="eeaaaa"] td {
-			padding:0;
-			font-size:9px !important;
-		}
 		.debug {
 			border:1px solid gray;
 			border-collapse:collapse;
@@ -329,7 +329,7 @@
 </label>
 
 <label for="swap" id="swapButtonLabel">
-	<input type="button" id="swapFromTo" value="&#8593; swap &#8595;" />
+	<button type="button" id="swapFromTo">&#8593; swap &#8595;</button>
 </label>
 
 <label for="to" id="forLabel">Travelling To
