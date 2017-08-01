@@ -64,12 +64,28 @@
 		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 	}
 
+	.w2Form label {
+		overflow:auto;
+	}
+
 	.w2Form input,
 	.w2Form button,
 	.w2Form textarea,
 	.w2Form select {
     	font-size: 16px;
     	border:1px solid #555;
+	}
+
+	.w2Form>label+label,
+	.w2Form>label+.formItem,
+	.w2Form>.formItem+.formItem,
+	.w2Form>.formItem+label,
+	.sectionContents>label+label {
+    	padding-top: 0px;
+	}
+
+	#swapButtonLabel {
+		margin-top:20px;
 	}
 
 	input[type="button"], button {
@@ -158,10 +174,7 @@
 		white-space:nowrap;
 	}
 
-	#swapButtonLabel {
-		margin-top:5px;
-		margin-bottom:14px;
-	}
+
 
 	#swapFromTo {
 		font-size:13px;
