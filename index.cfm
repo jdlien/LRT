@@ -245,14 +245,18 @@
 		}
 	}
 
-	.arrivalTime,
-	.countdown {
+	.arrivalTime, .aT,
+	.countdown, .cD {
 		min-width:80px;
 		white-space:nowrap;
 	}
 
-	.arrivalTime {
+	.arrivalTime, .aT {
 		font-weight:bold;
+	}
+
+	.trainName, .tN {
+
 	}
 
 	.due {
@@ -274,11 +278,12 @@
 		fill:#0A2D75;
 	}
 
-	tr.destRow {
+	tr.destRow, tr.dR {
 		display:none;
 	}
 
-	table td.destArrival {
+	table td.destArrival,
+	table td.dA {
 		font-style:oblique;
 		font-size:15px;
 		text-align: center;
@@ -515,7 +520,7 @@ $('#timeLabelText').click(function(){
 
 
 function updateArrivalTimes() {
-	$('.arrivalTime').each(function() {
+	$('.aT').each(function() {
 		var thisTime = $(this).html();
 		//Here are a bunch of hacks to get Safari to create a valid date
 		var thisDate = $(this).attr('data-datetime').replace('-', '/');
@@ -617,7 +622,7 @@ function bindShowArrival() {
 	$('.departures tr').click(function(){
 		if ($(this).next().is(":visible")) $(this).next().hide()
 		else {
-			$('.destRow').hide();
+			$('.dR').hide();
 			$(this).next().show();
 		}
 	});

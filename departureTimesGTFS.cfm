@@ -15,7 +15,7 @@
 	</cfswitch>
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="true" />
+<cfsetting showdebugoutput="false" />
 
 
 <cffunction name="getDepartures" returntype="void"
@@ -230,10 +230,10 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 	<cfloop query="DepartureTimes">
 		<!--- Only show if the time hasn't elapsed --->
 		<tr>
-			<td class="trainName">#UCase(stop_headsign)#</td>
-			<td class="arrivalTime" data-datetime="#ActualDateTime#">#TimeFormat(ActualDateTime, "h:mm tt")#</td>
-			<td class="countdown"></td>
-		<tr class="destRow"><td class="destArrival" colspan="3"><!--- Depart at #TimeFormat(ActualDateTime, "h:mm")# and  --->Arrive in #toStation.StationCode# at #TimeFormat(dest_arrival_datetime, "h:mm tt")#</td></tr>
+			<td class="tN">#UCase(stop_headsign)#</td>
+			<td class="aT" data-datetime="#ActualDateTime#">#TimeFormat(ActualDateTime, "h:mm tt")#</td>
+			<td class="cD"></td>
+		<tr class="dR"><td class="dA" colspan="3"><!--- Depart at #TimeFormat(ActualDateTime, "h:mm")# and  --->Arrive at #toStation.StationCode# at #TimeFormat(dest_arrival_datetime, "h:mm tt")#</td></tr>
 		</tr>
 	</cfloop>
 	</tbody>
