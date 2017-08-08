@@ -4,9 +4,9 @@
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
 	<cfif url.dark IS 1>
-		<cfcookie name="lrt_dark" value="true" expires="never" />
+		<cfcookie name="LRT_DARK" value="true" expires="never" />
 	<cfelseif url.dark IS 0>
-		<cfcookie name="lrt_dark" value="false" expires="never" />
+		<cfcookie name="LRT_DARK" value="false" expires="never" />
 	</cfif>
 </cfif>
 
@@ -45,7 +45,7 @@
 
 
 </head>
-<body>
+<body class="<cfif isDefined('cookie.lrt_dark') and cookie.lrt_dark IS true>darkMode</cfif>">
 	<div class="container clearfix">
 	<!--- If a sidebar is defined, it will be inserted here --->
 
@@ -157,6 +157,20 @@
 		font-size:17px;
 	}
 
+	.altColors tr {
+		background-color: #fff;
+	}
+
+	.altColors tr:nth-child(4n+3){
+		background-color:rgb(236, 236, 236);
+	}
+	.altColors tr:nth-child(4n+2){
+		background-color:rgb(255, 255, 255);
+	}
+	.altColors tr:nth-child(4n+4){
+		background-color:rgb(236, 236, 236);
+	}	
+
 	.departures table thead th {
 		padding:3px 3px;
 		font-size:15px;
@@ -260,50 +274,75 @@
 		fill:#0A2D75;
 	}
 
-	<cfif isDefined('cookie.lrt_dark') and cookie.lrt_dark IS true>
+	tr.destRow {
+		display:none;
+	}
+
+	table td.destArrival {
+		font-style:oblique;
+		font-size:15px;
+		text-align: center;
+		padding-bottom:8px;
+		padding-top:2px;
+	}
+
 	/* Dark Mode styles for Night */
-		body {
+		body.darkMode {
 			background-color:#222;
 			color:#ccc;
 		}
 		
-		.pageTitle, #nowLink, #nearestLink {
+		.darkMode .pageTitle,
+		.darkMode #nowLink,
+		.darkMode #nearestLink {
 			color:rgb(126, 164, 241);
 		}
 
 
-		.w2Contents {
+		.darkMode .w2Contents {
 			background-color:#111;
 		}
 
-		#timeLabelText, #departLabelText {
+		.darkMode #timeLabelText, 
+		.darkMode #departLabelText {
 			color:#ccc;
 		}
 
-		.altRow {
+		.darkMode .altRow {
 			background-color: rgb(40, 40, 40);
 		}
-		.departures table thead th {
+		.darkMode .departures table thead th {
 			/*color:#888;*/
 			background-color:rgb(40, 40, 40);
 		}
 
-		.altColors tr:nth-child(even){
+		.darkMode .altColors tr {
+			background-color: #000;
+		}
+
+		.darkMode .altColors tr:nth-child(4n+3){
 			background-color:rgb(40, 40, 40);
 		}
 
-		.altColors tr:nth-child(odd){
-			background-color:rgb(0, 0, 0);
+		.darkMode .altColors tr:nth-child(even){
+			/*background-color:rgb(40, 40, 40);*/
 		}
 
-		.w2Form input,
-		.w2Form button,
-		.w2Form textarea,
-		.w2Form select {
+		.darkMode .altColors tr:nth-child(4n+2){
+			background-color:rgb(0, 0, 0);
+		}
+		.darkMode .altColors tr:nth-child(4n+4){
+			background-color:rgb(40, 40, 40);
+		}		
+
+		.darkMode .w2Form input,
+		.darkMode .w2Form button,
+		.darkMode .w2Form textarea,
+		.darkMode .w2Form select {
 	    	border:1px solid #888;
 		}
 
-		select {
+		.darkMode select {
 			/*-webkit-appearance:none;*/
 			padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 			color:white;
@@ -311,40 +350,42 @@
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 		}
 
-		input, button {
+		.darkMode input, 
+		.darkMode button {
 			background-color:black;
 			color:#ddd;
 		}
 
-		input[type="button"], button {
+		.darkMode input[type="button"],
+		.darkMode button {
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 		}
 
-		.due {
+		.darkMode .due {
 			color:#00A000;
 		}
-		.gone {
+		.darkMode .gone {
 			color:#CC0000;
 		}
 
-		#geoIcon path {
+		.darkMode #geoIcon path {
 			fill:rgb(126, 164, 241);
 		}
 
-		.debug {
+		.darkMode .debug {
 			border:1px solid gray;
 			border-collapse:collapse;
 		}
 
-		.debug td {
+		.darkMode .debug td {
 			border:1px solid gray;	
 		}
 
-		.dowCell {
+		.darkMode .dowCell {
 			padding:0 2px!important;
 			text-align: center;
 		}
-	</cfif>
+	/* End darkMode styles */
 
 </style>
 
@@ -413,10 +454,25 @@
 
 <div class="departures" id="departures">
 <!--- this is where the tables will go --->
-<cfinclude template="departureTimes.cfm" />
+<cfinclude template="departureTimesGTFS.cfm" />
 
 </div><!--departures-->
 <p style="font-size:13px;color:#555;"><b>Note:</b> Times may vary by 2 minutes.</p>
+
+
+
+<!-- Page contents go above here -->
+</div><!--.page .w2Contents-->
+</div><!--.container .clearfix-->
+<p id="nightModeLink">
+	<cfif isDefined('cookie.lrt_dark') AND cookie.lrt_dark IS true>
+		<a href="javascript:void(0);">&#x2600; Day Mode</a>
+	<cfelse>
+		<a href="javascript:void(0);"><!--&#x1F31C; -->Night Mode</a>
+	</cfif>
+</p>
+
+
 <script>
 
 // loads new departure times via ajax
@@ -428,12 +484,13 @@ function refreshDepartureTimes() {
 	if (dowVal.length > 0 || timeVal.length > 0) $('#nowLink').show();
 	else $('#nowLink').hide();
 
-	$.get('departureTimes.cfm', {from:fromVal, to:toVal, time:timeVal, dow:dowVal}).done(function(data) {
+	$.get('departureTimesGTFS.cfm', {from:fromVal, to:toVal, time:timeVal, dow:dowVal}).done(function(data) {
 		$('#departures').html(data);
 		// update page URL so that you get the same data if you hit refresh
 		window.history.pushState("", "LRT Schedule", "?from="+fromVal+"&to="+toVal+"&time="+timeVal+"&dow="+dowVal);
 		// Refresh the arrival times so they don't go blank for a couple seconds
 		updateArrivalTimes();
+		bindShowArrival();
 	});
 
 }
@@ -555,6 +612,44 @@ $('#departLabelText').click(function(){
 });
 
 
+// Tapping on a row shows the hidden row beneath and hides all others
+function bindShowArrival() {
+	$('.departures tr').click(function(){
+		if ($(this).next().is(":visible")) $(this).next().hide()
+		else {
+			$('.destRow').hide();
+			$(this).next().show();
+		}
+	});
+}
+bindShowArrival();
+
+function setCookie(key, value) {
+	var expires = new Date();
+	expires.setTime(expires.getTime() + (10 * 365 * 24 * 60 * 60 * 1000));
+	document.cookie = key + '=' + value + ';expires=' + expires.toUTCString();
+}
+
+function getCookie(key) {
+    var keyValue = document.cookie.match('(^|;) ?' + key + '=([^;]*)(;|$)');
+    return keyValue ? keyValue[2] : null;
+}
+
+function toggleDarkMode() {
+	$('body').toggleClass('darkMode');
+	if (getCookie('LRT_DARK') === "true") {
+		setCookie('LRT_DARK', "false");
+		$('#nightModeLink a').html('Night Mode');
+	}
+	else {
+		setCookie('LRT_DARK', "true");
+		$('#nightModeLink a').html('&#x2600; Day Mode');
+	}
+}
+
+$('#nightModeLink a').click(function(){
+	toggleDarkMode();
+});
 
 </script>
 
@@ -562,16 +657,7 @@ $('#departLabelText').click(function(){
 
 
 
-<!-- Page contents go above here -->
-</div><!--.page .w2Contents-->
-</div><!--.container .clearfix-->
-<p id="nightModeLink">
-	<cfif isDefined('cookie.lrt_dark') AND cookie.lrt_dark IS true>
-		<a href="?dark=0">&#x2600; Day Mode</a>
-	<cfelse>
-		<a href="?dark=1"><!--&#x1F31C; -->Night Mode</a>
-	</cfif>
-</p>
+
 
 <!--- Only include Google Analytics for pages that exist. --->
 <cfif NOT isDefined('error404')>
