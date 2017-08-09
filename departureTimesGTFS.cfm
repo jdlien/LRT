@@ -16,6 +16,8 @@
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
 <cfsetting showdebugoutput="false" />
+<cfsetting requesttimeout="12" />
+<!--- set to 12s as safeguard against runaway recursive function. This page gets really slow, though :(  --->
 
 
 <cffunction name="getDepartures" returntype="void"
@@ -53,13 +55,17 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 		SELECT * FROM vsd.EZLRTStations WHERE StationID=#to#
 	</cfquery>
 
-
-	<cfquery name="validLines" dbtype="ODBC" datasource="SecureSource">
-		SELECT sl.LineID, LineCode, LineName, AdditionalInfo FROM vsd.EZLRTStationsLines sl
-		JOIN vsd.EZLRTLines l ON sl.LineID=l.LineID
-		WHERE StationID IN (#from#,#to#)
-		GROUP BY sl.LineID, LineCode, LineName, AdditionalInfo
-		HAVING COUNT(*)=2
+	<!--- This query checks to see if our to and from stations connect. If not, we have to find a connecting station --->
+	<cfquery name="validTrips" dbtype="ODBC" datasource="SecureSource">
+		SELECT TOP 1 trip_id FROM 
+			(SELECT trip_id, min(stop_id) as minStop FROM vsd.ETS_stop_times
+			WHERE stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#)
+			GROUP  BY trip_id
+			UNION ALL
+			SELECT trip_id, min(stop_id) as minStop FROM vsd.ETS_stop_times
+			WHERE stop_id IN (#toStation.stop_id1#,#toStation.stop_id2#)
+		GROUP BY trip_id) stt
+		GROUP BY trip_id HAVING COUNT(*) > 1
 	</cfquery>
 
 	<cfset cost = fromStation.CostFromOrigin />
@@ -67,19 +73,79 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 
 
 
-	<cfif validLines.RecordCount IS 0>
+	<cfif validTrips.RecordCount IS 0>
 		<!--- Query for a station that has a line present at both the source and destination station --->
+		<!--- I could honestly just hardcode this as Churchill... but what fun would that be? --->
+
+		<cfquery name="CommonStops" dbtype="ODBC" datasource="SecureSource">
+			SELECT stop_id FROM (
+			--All stops on trips that include FROM station
+			SELECT DISTINCT stop_id--, stop_sequence
+			FROM vsd.ETS_stop_times WHERE trip_id IN (SELECT trip_ID from  vsd.ETS_stop_times WHERE stop_id IN (#fromStation.stop_id1#, #fromStation.stop_id2#) )
+			UNION ALL
+			--All stops on trips that include TO station
+			SELECT DISTINCT stop_id--, stop_sequence
+			FROM vsd.ETS_stop_times WHERE trip_id IN (SELECT trip_ID from  vsd.ETS_stop_times WHERE stop_id IN (#toStation.stop_id1#, #toStation.stop_id2#) )
+			) AS bothRouteStops
+			GROUP BY bothRouteStops.stop_id
+			HAVING count(stop_id)=2
+		</cfquery>
+
+
+		<!--- Get a max sequence for the example trip to be sure we get a trip that has the full set of stops --->
+		<cfquery name="MaxTrip" dbtype="ODBC" datasource="SecureSource">
+			SELECT MAX(stop_sequence) AS max_stops FROM vsd.ETS_stop_times stimes WHERE trip_id IN (
+				--list of trips with our from and connecting stations
+				SELECT trip_id FROM
+				(	(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+					WHERE stop_id IN
+						(2316,2116,1891,2014,1925,1691,9981,9982,2113,1876,2114,1863,2969,4982,1774,1926,2115,1985,2019,1754,1935)
+					)
+					UNION ALL
+					(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+					WHERE stop_id IN
+					--From station (Clareview in this example)
+					(1116, 1116)
+					)
+				) AS bothStopTrips
+		
+				GROUP BY trip_id HAVING count(*)=2
+			)
+		</cfquery>
+
+		<cfquery name="ExampleTrip" dbtype="ODBC" datasource="SecureSource">
+		-- This seems to work efficiently to get a trip ID
+		SELECT MAX(trip_id) AS trip_id FROM vsd.ETS_stop_times WHERE trip_id IN (
+			--list of trips with our from and connecting stations
+			SELECT trip_id FROM
+			(	(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+				WHERE stop_id IN
+					(<cfoutput query="CommonStops"><cfif currentRow GT 1>,</cfif>#stop_id#</cfoutput>)
+				)
+				UNION ALL
+				(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+				WHERE stop_id IN
+				--From station (Clareview in this example)
+				(#fromStation.stop_id1#, #fromStation.stop_id2#)
+				)
+			) AS bothStopTrips
+			WHERE stop_sequence=#MaxTrip.max_stops#
+			GROUP BY trip_id HAVING count(*)=2
+		)
+		</cfquery>
+
+
+		<cfquery name="ConnectingStopID" dbtype="ODBC" datasource="SecureSource">
+			SELECT TOP 1 stop_id FROM vsd.ETS_stop_times WHERE trip_id=#ExampleTrip.trip_id#
+			AND stop_sequence > (SELECT MAX(stop_sequence) FROM vsd.ETS_stop_times WHERE trip_id=#ExampleTrip.trip_id# AND stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#))
+			AND stop_id in (<cfoutput query="CommonStops"><cfif currentRow GT 1>,</cfif>#stop_id#</cfoutput>)
+			ORDER BY stop_sequence
+		</cfquery>
+
 		<cfquery name="ConnectingStation" dbtype="ODBC" datasource="SecureSource">
-			SELECT TOP 1 sl.StationID, StationCode, StationName, Coordinates, CostFromOrigin, ABS(CostFromOrigin-1035) AS RelativeCost, Type, AdditionalInfo FROM vsd.EZLRTStationsLines sl
-			JOIN vsd.EZLRTStations s ON s.StationID=sl.StationID
-			WHERE LineID IN
-			(SELECT LineID FROM vsd.EZLRTStationsLines WHERE StationID=15
-				UNION
-			 SELECT LineID FROM vsd.EZLRTStationsLines WHERE StationID=18)
-			GROUP BY sl.StationID, StationCode, StationName, Coordinates, CostFromOrigin, Type, AdditionalInfo
-				HAVING COUNT(*)=2
-			ORDER BY RelativeCost
-		</cfquery>	
+			SELECT * FROM vsd.EZLRTStations WHERE
+			stop_id1=#ConnectingStopID.stop_id# OR stop_id2=#ConnectingStopID.stop_id#
+		</cfquery>
 
 		<!--- If there's a connecting station, we now have to do TWO routes. Have fun. --->
 		<cfif ConnectingStation.RecordCount>
@@ -101,72 +167,73 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			<cfreturn />
 		</cfif>
 
-	</cfif><!---validLines.RecordCount IS 0--->
+	</cfif><!---validTrips.RecordCount IS 0--->
 
 
-	<cfquery name="TripTrack" dbtype="ODBC" datasource="SecureSource">
-		SELECT * FROM vsd.EZLRTTracks WHERE LineID IN (#ValueList(validLines.LineID)#) AND CostDirection='#abs(relTravelTime)/relTravelTime#'
-	</cfquery>
-
-	<!--- Determine the origin station. What station is also on this line with the smallest cost --->
-	<!--- If we are going in an increasing direction, we want to find stations with a smaller cost on this line --->
-	<!--- Else we find the station with the highest cost --->	
-	<cfquery name="OriginStations" dbtype="ODBC" datasource="SecureSource">
-		--This gets us our list of origin stations, even if there are two lines
-		SELECT * FROM vsd.EZLRTStations s
-		WHERE CostFromOrigin <cfif relTravelTime GT 0><=<cfelse>>=</cfif> #cost#
-		AND s.StationID IN
-		(SELECT StationID FROM vsd.EZLRTStationsLines WHERE StationID=s.StationID AND LineID IN (#ValueList(validLines.LineID)#))
-	</cfquery>
-
-	<!--- If the date is just before midnight, then we leave the "yesterday" section to the same date
-		and let the travel time wrap it to the next day
-		 If the date is after midnight, we set it back one day --->
-	<cfif Hour(CurrentTime) GTE 21>
-		<cfset dateAdjust = 0>
-	<cfelse>
-		<cfset dateAdjust = -1>
-	</cfif>
 
 	<!--- Query that should show the relevant schedule times. --->
 	<cfquery name="DepartureTimes" dbtype="ODBC" datasource="SecureSource">
-		SELECT (
+		SELECT
+		<cfif isDefined('url.destTime')>( -- As cool as it is to get the destination arrival time, it makes queries 10x slower :(
 			SELECT TOP 1 sdt2.ActualDateTime FROM vsd.ETS_trip_stop_datetimes sdt2
 			WHERE (stop_id=#toStation.stop_id1# OR stop_id=#toStation.stop_id2#)
 			AND trip_id=sdt.trip_id
 			AND stop_sequence > sdt.stop_sequence
 			AND ActualDateTime > #CurrentTime#
 			ORDER BY sdt2.ActualDateTime
-		) AS dest_arrival_datetime,
+		) AS dest_arrival_datetime, </cfif>
 		* FROM vsd.ETS_trip_stop_datetimes sdt
-		WHERE pickup_type=0 AND (stop_id=#fromStation.stop_id1# OR stop_id=#fromStation.stop_id2#) --FROM station, North OR South
-		AND trip_id IN (SELECT DISTINCT trip_id from vsd.ETS_stop_times stime2	WHERE stime2.stop_id=#toStation.stop_id1# OR stime2.stop_id=#toStation.stop_id2#) --TO station, North OR South
+		WHERE pickup_type=0 AND (stop_id=#fromStation.stop_id1# OR stop_id=#fromStation.stop_id2#) --FROM station #fromStation.StationCode#, North OR South
+		AND trip_id IN (SELECT DISTINCT trip_id from vsd.ETS_stop_times stime2	WHERE stime2.stop_id=#toStation.stop_id1# OR stime2.stop_id=#toStation.stop_id2#) --TO station #toStation.StationCode#, North OR South
 		AND ActualDateTime > #CurrentTime# AND ActualDateTime < #MaxFutureTime#
 		AND EXISTS --stop for destination station from same trip
 		(SELECT stop_sequence FROM vsd.ETS_stop_times stime3
 			WHERE (stop_id=#toStation.stop_id1# OR stop_id=#toStation.stop_id2#)
 			AND trip_id=sdt.trip_id
 			AND stop_sequence > sdt.stop_sequence
-			-- AND stop_sequence-sdt.stop_sequence < 
-			-- --If there's more than one stop for our FROM location, 
-			-- CASE WHEN (SELECT COUNT(*) FROM vsd.ETS_stop_times WHERE trip_id=sdt.trip_id AND (stop_id=#fromStation.stop_id1# OR stop_id=#fromStation.stop_id2#)) > 1 --If the from station shows up twice
-			-- THEN (SELECT Max(stop_sequence)/2 FROM vsd.ETS_stop_times WHERE trip_id=sdt.trip_id) --We look for the one that is less than half a trip away
-			-- ELSE (SELECT Max(stop_sequence) FROM vsd.ETS_stop_times WHERE trip_id=sdt.trip_id) --Otherwise, we look through the whole trip
-			-- END --CASE
+			-- This clause is necessary to determine ensure we only get trains going the right direction
 			AND sdt.stop_sequence = (
-				SELECT TOP 1
-				stop_sequence
-				FROM vsd.ETS_stop_times
-				WHERE trip_id=sdt.trip_id
-				AND (stop_id=#fromStation.stop_id1# OR stop_id=#fromStation.stop_id2#)
+				SELECT max(stop_sequence) FROM vsd.ETS_stop_times
+				WHERE trip_id=sdt.trip_id AND (stop_id=#fromStation.stop_id1# OR stop_id=#fromStation.stop_id2#)
 				AND stop_sequence < stime3.stop_sequence
-				ORDER BY stime3.stop_sequence-stop_sequence
 			)
-			--This should now work for a circular system because it'll only limit the stop-time difference to half of the trip if there's more than one stop for the current FROM...
 			AND drop_off_type=0 --this makes sure we can get off, won't show the pickup stop after train switches direction
 		)
 		ORDER BY ActualDateTime
 	</cfquery>
+
+	<!--- See, if I put it here, I can use the actual destination stop --->
+	<cfif DepartureTimes.RecordCount>
+		<!--- Query to calculate trip times. Should only add a few ms --->
+		<cfquery name="TripDurationHelper" dbtype="ODBC" datasource="SecureSource">
+			SELECT TOP 3 arrival_time, trip_id, stop_id, stop_sequence, stop_headsign,
+			(SELECT TOP 1 arrival_time FROM vsd.ETS_stop_times
+			WHERE trip_id=#validTrips.trip_id# --from validTrips
+				AND stop_id IN (#toStation.stop_id1#,#toStation.stop_id2#)
+				AND stop_sequence > sdt.stop_sequence
+				ORDER BY stop_sequence
+			) AS DestTime
+			FROM vsd.ETS_stop_times sdt WHERE trip_id=#validTrips.trip_id#
+			AND stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#)
+			AND (SELECT TOP 1 arrival_time FROM vsd.ETS_stop_times
+			WHERE trip_id=#validTrips.trip_id# --from validTrips
+				AND stop_id IN (#toStation.stop_id1#,#toStation.stop_id2#)
+				AND stop_sequence > sdt.stop_sequence
+			) IS NOT NULL
+			ORDER BY arrival_time DESC
+		</cfquery>
+
+		<!--- If we got a valid --->
+		<cfif TripDurationHelper.RecordCount AND len(TripDurationHelper.DestTime)>
+			<!--- Deal with wacky 24+ hour times here if they crop up - just subtract ten hours, since only relative times matter --->
+			<cfif left(TripDurationHelper.destTime,2) GT 23>
+				<cfset TripDurationHelper.arrival_time = (left(TripDurationHelper.arrival_time,2)-10)&right(TripDurationHelper.arrival_time, 6)>
+				<cfset TripDurationHelper.DestTime = (left(TripDurationHelper.DestTime,2)-10)&right(TripDurationHelper.DestTime, 6)>
+			</cfif>
+			<cfset relTravelTime=DateDiff("n", TripDurationHelper.arrival_time, TripDurationHelper.DestTime) />
+		</cfif>
+
+	</cfif>
 
 	<!--- For Debugging/Testing --->
 	<cfif isDefined("url.debug")>
@@ -176,7 +243,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 	<table class="debug altColors">
 		<tr>
 			<th>ActualDateTime</th>
-			<th>dest_arrival</th>
+			<cfif isDefined('url.destTime')><th>dest_arrival</th></cfif>
 			<th>trip_id</th>
 			<th>block_id</th>
 			<th>arrival</th>
@@ -191,7 +258,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 		<cfoutput query="DepartureTimes">
 			<tr>
 				<td><span class="nowrap">#DateFormat(ActualDateTime,"YYYY-Mmm-dd")#</span> #TimeFormat(ActualDateTime, "HH:mm")#</td>
-				<td><span class="nowrap">#DateFormat(dest_arrival_datetime,"YYYY-Mmm-dd")#</span> #TimeFormat(dest_arrival_datetime, "HH:mm")#</td>
+				<cfif isDefined('url.destTime')><td><span class="nowrap">#DateFormat(dest_arrival_datetime,"YYYY-Mmm-dd")#</span> #TimeFormat(dest_arrival_datetime, "HH:mm")#</td></cfif>
 				<td>#trip_id#</td>
 				<td>#block_id#</td>
 				<td>#arrival_time#</td>
@@ -219,7 +286,8 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 		<tr>
 			<th colspan="4">Departures from #fromStation.StationCode# <span class="nowrap">to #toStation.StationCode#</span><!-- after #TimeFormat(CurrentTime, "h:mm tt")#-->
 			<div class="tripTime"><cfif DepartureTimes.recordCount>
-			Trip time is <b>#dateDiff("n", DepartureTimes.ActualDateTime, DepartureTimes.dest_arrival_datetime)# minutes</b>
+			<cfif isDefined('url.destTime')>Trip time is <b>#dateDiff("n", DepartureTimes.ActualDateTime, DepartureTimes.dest_arrival_datetime)# minutes</b><cfelse>
+			Trip time is <b>#abs(relTravelTime)#</b> minute<cfif abs(relTravelTime) GT 1>s</cfif></cfif>
 			<cfelse>
 				There are no departures during this time. 
 			</cfif></div>
@@ -233,7 +301,9 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			<td class="tN">#UCase(stop_headsign)#</td>
 			<td class="aT" data-datetime="#ActualDateTime#">#TimeFormat(ActualDateTime, "h:mm tt")#</td>
 			<td class="cD"></td>
-		<tr class="dR"><td class="dA" colspan="3"><!--- Depart at #TimeFormat(ActualDateTime, "h:mm")# and  --->Arrive at #toStation.StationCode# at #TimeFormat(dest_arrival_datetime, "h:mm tt")#</td></tr>
+		<tr class="dR">
+			<td class="dA" colspan="3">Arrive at #toStation.StationCode# <cfif isDefined('url.destTime')>at #TimeFormat(dest_arrival_datetime, "h:mm tt")#<cfelse>at #TimeFormat(DateAdd("n", abs(relTravelTime), ActualDateTime), "h:mm tt")#</cfif></td>
+		</tr>
 		</tr>
 	</cfloop>
 	</tbody>

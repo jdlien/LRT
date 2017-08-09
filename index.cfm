@@ -284,7 +284,7 @@
 
 	table td.destArrival,
 	table td.dA {
-		font-style:oblique;
+		opacity:0.75;
 		font-size:15px;
 		text-align: center;
 		padding-bottom:8px;
@@ -489,10 +489,10 @@ function refreshDepartureTimes() {
 	if (dowVal.length > 0 || timeVal.length > 0) $('#nowLink').show();
 	else $('#nowLink').hide();
 
-	$.get('departureTimesGTFS.cfm', {from:fromVal, to:toVal, time:timeVal, dow:dowVal}).done(function(data) {
+	$.get('departureTimesGTFS.cfm', {from:fromVal, to:toVal, time:timeVal, dow:dowVal<cfif isDefined('url.destTime')>, destTime:true</cfif>}).done(function(data) {
 		$('#departures').html(data);
 		// update page URL so that you get the same data if you hit refresh
-		window.history.pushState("", "LRT Schedule", "?from="+fromVal+"&to="+toVal+"&time="+timeVal+"&dow="+dowVal);
+		window.history.pushState("", "LRT Schedule", "?from="+fromVal+"&to="+toVal+"&time="+timeVal+"&dow="+dowVal<cfif isDefined('url.destTime')>+"&destTime"</cfif>);
 		// Refresh the arrival times so they don't go blank for a couple seconds
 		updateArrivalTimes();
 		bindShowArrival();
