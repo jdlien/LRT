@@ -15,7 +15,7 @@
 	</cfswitch>
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="false" />
+<cfsetting showdebugoutput="true" />
 <cfsetting requesttimeout="12" />
 <!--- set to 12s as safeguard against runaway recursive function. This page gets really slow, though :(  --->
 
@@ -57,7 +57,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 
 	<!--- This query checks to see if our to and from stations connect. If not, we have to find a connecting station --->
 	<cfquery name="validTrips" dbtype="ODBC" datasource="SecureSource">
-		SELECT TOP 1 trip_id FROM 
+		SELECT trip_id FROM 
 			(SELECT trip_id, min(stop_id) as minStop FROM vsd.ETS_stop_times
 			WHERE stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#)
 			GROUP  BY trip_id
@@ -99,13 +99,13 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 				SELECT trip_id FROM
 				(	(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
 					WHERE stop_id IN
-						(2316,2116,1891,2014,1925,1691,9981,9982,2113,1876,2114,1863,2969,4982,1774,1926,2115,1985,2019,1754,1935)
+						(<cfoutput query="CommonStops"><cfif currentRow GT 1>,</cfif>#stop_id#</cfoutput>)
 					)
 					UNION ALL
 					(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
 					WHERE stop_id IN
-					--From station (Clareview in this example)
-					(1116, 1116)
+					--From station (#fromStation.StationCode# in this case)
+					(#fromStation.stop_id1#, #fromStation.stop_id2#)
 					)
 				) AS bothStopTrips
 		
@@ -146,6 +146,79 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			SELECT * FROM vsd.EZLRTStations WHERE
 			stop_id1=#ConnectingStopID.stop_id# OR stop_id2=#ConnectingStopID.stop_id#
 		</cfquery>
+
+
+		<!--- all-in-one ConnectingStation query... about 300ms slower this way
+		<cfquery name="ConnectingStation" dbtype="ODBC" datasource="SecureSource">
+
+		--CommonStops (Datasource=SecureSource, Time=47ms, Records=21) in C:\inetpub\apps.epl.ca\Dev\LRT\departureTimesGTFS.cfm @ 10:37:47.047
+		DECLARE @commonStops TABLE (stop_id INT);
+		INSERT INTO @commonStops (stop_id)
+			SELECT stop_id FROM (
+			--All stops on trips that include FROM station
+			SELECT DISTINCT stop_id--, stop_sequence
+			FROM vsd.ETS_stop_times WHERE trip_id IN (SELECT trip_ID from  vsd.ETS_stop_times WHERE stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#) )
+			UNION ALL
+			--All stops on trips that include TO station
+			SELECT DISTINCT stop_id--, stop_sequence
+			FROM vsd.ETS_stop_times WHERE trip_id IN (SELECT trip_ID from  vsd.ETS_stop_times WHERE stop_id IN (#toStation.stop_id1#,#toStation.stop_id2#) )
+			) AS bothRouteStops
+			GROUP BY bothRouteStops.stop_id
+			HAVING count(stop_id)=2
+
+		--maxStops
+		DECLARE @maxStops INT = (
+		SELECT MAX(stop_sequence) AS max_stops FROM vsd.ETS_stop_times stimes WHERE trip_id IN (
+			--list of trips with our from and connecting stations
+			SELECT trip_id FROM
+			(
+				(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times WHERE stop_id IN (SELECT stop_id FROM @commonStops) )
+				UNION ALL
+				(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+				WHERE stop_id IN --From station
+				(#fromStation.stop_id1#,#fromStation.stop_id2#)
+				) 
+			) AS bothStopTrips
+			GROUP BY trip_id HAVING count(*)=2
+		)
+		)
+				
+		--ExampleTrip trip_id
+		DECLARE @exampleTrip INT = (
+			SELECT MAX(trip_id) AS trip_id FROM vsd.ETS_stop_times WHERE trip_id IN (
+				--list of trips with our from and connecting stations
+				SELECT trip_id FROM
+				(	(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+					WHERE stop_id IN
+						(SELECT stop_id FROM @commonStops)
+					)
+					UNION ALL
+					(SELECT DISTINCT trip_id FROM vsd.ETS_stop_times
+					WHERE stop_id IN --From station
+					(#fromStation.stop_id1#,#fromStation.stop_id2#)
+					)
+				) AS bothStopTrips
+				WHERE stop_sequence=@maxStops
+				GROUP BY trip_id HAVING count(*)=2
+			)
+		)
+		--ConnectingStopID (Datasource=SecureSource, Time=172ms, Records=1) in C:\inetpub\apps.epl.ca\Dev\LRT\departureTimesGTFS.cfm @ 10:37:48.048
+		DECLARE @connectingStopID INT = (
+			SELECT TOP 1 stop_id FROM vsd.ETS_stop_times WHERE trip_id=@exampleTrip
+			AND stop_sequence > (SELECT MAX(stop_sequence) FROM vsd.ETS_stop_times WHERE trip_id=@exampleTrip AND stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#))
+			AND stop_id IN (SELECT stop_id FROM @commonStops)
+			ORDER BY stop_sequence
+		)
+				
+		--ConnectingStation (Datasource=SecureSource, Time=0ms, Records=1) in C:\inetpub\apps.epl.ca\Dev\LRT\departureTimesGTFS.cfm @ 10:37:48.048
+		SELECT * FROM vsd.EZLRTStations WHERE
+		stop_id1 = @connectingStopID OR stop_id2 = @connectingStopID 
+
+		</cfquery> END giant connectingstation query --->
+
+
+
+
 
 		<!--- If there's a connecting station, we now have to do TWO routes. Have fun. --->
 		<cfif ConnectingStation.RecordCount>
