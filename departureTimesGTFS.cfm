@@ -15,7 +15,7 @@
 	</cfswitch>
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="false" />
+<cfsetting showdebugoutput="true" />
 <cfsetting requesttimeout="12" />
 <!--- set to 12s as safeguard against runaway recursive function. This page gets really slow, though :(  --->
 
@@ -364,7 +364,7 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			<cfelse>
 				There are no departures during this time. 
 			</cfif></div>
-			</th></tr>
+			</th>
 		</tr>
 	</thead>
 	<tbody>
@@ -374,9 +374,9 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			<td class="tN">#UCase(stop_headsign)#</td>
 			<td class="aT" data-datetime="#ActualDateTime#">#TimeFormat(ActualDateTime, "h:mm tt")#</td>
 			<td class="cD"></td>
+		</tr>
 		<tr class="dR">
 			<td class="dA" colspan="3">Arrive at #toStation.StationCode# <cfif isDefined('url.destTime')>at #TimeFormat(dest_arrival_datetime, "h:mm tt")#<cfelse>at #TimeFormat(DateAdd("n", abs(relTravelTime), ActualDateTime), "h:mm tt")#</cfif></td>
-		</tr>
 		</tr>
 	</cfloop>
 	</tbody>

@@ -1,5 +1,7 @@
-<cfset PageTitle="Edmonton LRT Schedule">
-<cfset PageTitleHead="LRT Schedule" />
+<cfset opType="LRT" />
+<cfif isDefined('url.fromStop')><cfset opType="Bus Stop" /></cfif>
+<cfset PageTitle="Edmonton #opType# Schedule">
+<cfset PageTitleHead="#opType# Schedule" />
 
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
@@ -24,6 +26,7 @@
 	<!--- Geo calculation stuff --->
 	<script defer src="latlon-spherical.min.js"></script>
     <script defer src="dms.min.js"></script>
+    <script defer src="/Javascript/select2-4.0.3/dist/js/select2.min.js"></script>
 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
 	<link rel="icon" type="image/png" href="/favicon.png" />
@@ -52,7 +55,7 @@
 	<div class="page w2Contents">
 	<!-- Page contents go below here -->
     
-
+	<link href="/Javascript/select2-4.0.3/dist/css/select2.min.css" type="text/css" rel="stylesheet" />
   
     <cfoutput><cfif len(PageTitle)><div class="pageTitle">#PageTitle#</div></cfif></cfoutput>
 
@@ -62,6 +65,24 @@
 	select {
 		/*-webkit-appearance:none;*/
 		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
+	}
+
+	/* Style to handle select2 dropdown */
+	label[for="fromStop"] {
+		min-height:30px;
+	}
+
+	.select2-container {
+		font-weight:normal;
+		float:right;
+	}
+
+	.select2-selection {
+
+	}
+
+	input.select2-search__field {
+		font-size:inherit;
 	}
 
 	.w2Form label {
@@ -126,6 +147,11 @@
 		margin-top:5px;
 		color:black;
 		text-decoration: none;
+	}
+
+	a {
+		text-decoration: underline;
+		color:#0A2D75;
 	}
 
 	#nowLink, #nearestLink {
@@ -224,11 +250,11 @@
 			padding:1px 10px 2px 10px;
 		}
 
-	#swapButtonLabel {
-		display:flex;
-		justify-content:center;
-		margin-bottom:8px;
-	}
+		#swapButtonLabel {
+			display:flex;
+			justify-content:center;
+			margin-bottom:8px;
+		}
 
 		label#forLabel,
 		div#timeLabel {
@@ -243,6 +269,17 @@
 		#timeGroup {
 			width:auto;
 		}
+
+
+		label[for="fromStop"] {
+			overflow:visible;
+			/*display:block;*/
+		}
+		/* select 2 responsive styling */
+		.select2-container {
+		     float: none; 
+		}		
+
 	}
 
 	.arrivalTime, .aT,
@@ -291,6 +328,11 @@
 		padding-top:2px;
 	}
 
+	.opMode {
+		margin-top:10px;
+		text-align: center;
+	}
+
 	/* Dark Mode styles for Night */
 		body.darkMode {
 			background-color:#222;
@@ -303,6 +345,9 @@
 			color:rgb(126, 164, 241);
 		}
 
+		.darkMode a {
+			color:rgb(126, 164, 241);
+		}
 
 		.darkMode .w2Contents {
 			background-color:#111;
@@ -355,6 +400,28 @@
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 		}
 
+		.darkMode .select2-selection {
+			background-color:black;
+			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
+			border:1px solid #888;
+		}
+
+		.darkMode .select2-container--default .select2-selection--single .select2-selection__rendered {
+			color:white;
+		}		
+		
+		.darkMode .select2-dropdown {
+			background-color:black;
+		}
+
+		.darkMode .select2-container--default .select2-results__option[aria-selected=true] {
+    		background-color: #222;
+		}
+
+		.darkMode .select2-container--default .select2-selection--multiple .select2-selection__choice {
+			background-color:black;
+		}
+
 		.darkMode input, 
 		.darkMode button {
 			background-color:black;
@@ -364,6 +431,14 @@
 		.darkMode input[type="button"],
 		.darkMode button {
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
+		}
+
+		.darkMode .select2-container--default .select2-selection--multiple .select2-selection__choice {
+			border-color:#666;
+		}
+
+		.darkMode .select2-container--default.select2-container--focus .select2-selection--multiple {
+			border-color: #aaa;
 		}
 
 		.darkMode .due {
@@ -392,6 +467,7 @@
 		}
 	/* End darkMode styles */
 
+
 </style>
 
 <!--- The most basic operation of this app will let you select a source and destination station
@@ -405,7 +481,26 @@
 	ORDER BY CostFromOrigin
 </cfquery>
 
+
 <form class="w2Form" id="fromToForm">
+
+<cfif isDefined('url.fromStop')>
+<!--- 6500 stops! --->
+<cfquery name="Stops" dbtype="ODBC" datasource="SecureSource">
+	SELECT * FROM vsd.ETS_stops
+</cfquery>
+<!--- This makes for a massive 6500 item select --->
+<label for="fromStop"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest</span></a>
+	<select name="fromStop" id="fromStop" class="select2select" multiple="multiple">
+		<cfoutput query="Stops">
+			<option value="#stop_id#" <cfif isDefined('url.fromStop') AND url.fromStop IS stop_id>selected</cfif>>#stop_id# #stop_name#</option>
+		</cfoutput>
+	</select>
+</label>
+
+
+<cfelse>
+
 
 <label for="from" style="margin-bottom:0;"><a href="javascript:void(0);" id="departLabelText" title="Click to set based on your location">Departing From <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest</span></a>
 	<select name="from" id="from">
@@ -426,6 +521,8 @@
 		</cfoutput>
 	</select>
 </label>
+
+</cfif><!---if not in bus stop mode --->
 
 <div class="formItem" id="timeLabel"><a href="javascript:void(0);" id="timeLabelText">Time <span id="nowLink">Reset</span></a>
 	<span class="formGroup" id="timeGroup">
@@ -469,6 +566,13 @@
 <!-- Page contents go above here -->
 </div><!--.page .w2Contents-->
 </div><!--.container .clearfix-->
+<div class="opMode">
+	<cfif isDefined('url.fromStop')>
+		<a href="?">LRT Schedule</a>
+	<cfelse>
+		<a href="?fromStop">Bus Stop Schedule</a>
+	</cfif>
+</div>
 <p id="nightModeLink">
 	<cfif isDefined('cookie.lrt_dark') AND cookie.lrt_dark IS true>
 		<a href="javascript:void(0);">&#x2600; Day Mode</a>
@@ -479,6 +583,10 @@
 
 
 <script>
+$(document).ready(function() {
+  $(".select2select").select2();
+});
+
 
 // loads new departure times via ajax
 function refreshDepartureTimes() {
@@ -500,9 +608,34 @@ function refreshDepartureTimes() {
 
 }
 
-$('#fromToForm select').change(function(){
+// loads new bus stop times via ajax
+function refreshStopTimes() {
+	var fromStop = $('#fromStop').val();
+	var timeVal = $('#time').val();
+	var dowVal = $('#dow').val();
+	if (dowVal.length > 0 || timeVal.length > 0) $('#nowLink').show();
+	else $('#nowLink').hide();
+
+	$.ajax('stopTimesGTFS.cfm', { data:{fromStop:fromStop, time:timeVal, dow:dowVal}, traditional:true}).done(function(data) {
+		$('#departures').html(data);
+		// update page URL so that you get the same data if you hit refresh
+		window.history.pushState("", "Bus Stop Schedule", "?fromStop="+fromStop+"&time="+timeVal+"&dow="+dowVal);
+		// Refresh the arrival times so they don't go blank for a couple seconds
+		updateArrivalTimes();
+		// bindShowArrival();
+	});
+
+}
+
+
+$('#from, #to, #time, #dow').change(function(){
 	refreshDepartureTimes();
 })
+
+$('#fromStop').change(function(){
+	refreshStopTimes();
+})
+
 
 $('#swapFromTo').click(function(){
 	var fromVal = $('#from').val();
@@ -571,6 +704,15 @@ var stationCoords = [
 <cfif c>,</cfif>{id:#StationID#<cfloop list="#coordinates#" index="i">, <cfif c++ MOD 2 IS 0>lat<cfelse>lon</cfif>:#trim(i)#</cfloop>}
 </cfoutput>];
 
+<!--- Include a table of bus stop coordinates if relevant --->
+<cfif isDefined('url.fromStop')>
+var stopCoords = [
+<cfoutput query="Stops">
+<cfif CurrentRow GT 1>,</cfif>{id:#stop_id#, lat:#trim(stop_lat)#, lon:#trim(stop_lon)#}
+</cfoutput>];
+
+</cfif>
+
 
 // Experimental calculation of distance from stations
 function geoDistance(lat1, lon1, lat2, lon2) {
@@ -592,8 +734,33 @@ function findClosestStation(position) {
     var userLon = position.coords.longitude;
 
     var closestStation="";
+    var closestStop1="";
+    var closestStop2="";
+    var closestStop3="";
     // Default to about the furthest point on earth in meters 21,000 km
     var closestDistance="21000000";
+
+    // Loop through all stops
+    <cfif isDefined('url.fromStop')>
+	stopCoords.forEach(function(stop){
+		var dist=geoDistance(userLat, userLon, stop.lat, stop.lon);
+		if (dist < closestDistance) {
+			closestDistance=dist;
+			closestStop3=closestStop2;
+			closestStop2=closestStop1;
+			closestStop1=stop.id;
+		}
+	});
+
+var closeStops = new Array();
+	closeStops[0] = closestStop1;
+	closeStops[1] = closestStop2;
+	closeStops[2] = closestStop3;
+
+
+	$('#fromStop').val(closeStops);
+	$('#fromStop').trigger('change');
+    <cfelse>
 
 	// Loop through all stations 
 	stationCoords.forEach(function(station){
@@ -603,6 +770,7 @@ function findClosestStation(position) {
 			closestStation=station.id;
 		}
 	});
+
 	// If the user's closest station is the one they had set as their destination,
 	// I'm going to assume they want to go back to where they came from.
 	// This has to be more useful than having from and to be the same
@@ -610,6 +778,8 @@ function findClosestStation(position) {
 		$('#to').val($('#from').val());
 	}
 	$('#from').val(closestStation).trigger('change');
+
+	</cfif>
 }
 
 $('#departLabelText').click(function(){
