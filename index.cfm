@@ -825,6 +825,10 @@ $('#fromStop').change(function(){
 $('#time, #dow').change(function(){
 	refreshStopTimes();
 });
+<cfelseif isDefined('url.rid')>
+$('#time, #dow').change(function(){
+	refreshRouteDepartureTimes();
+});
 <cfelse>
 $('#time, #dow').change(function(){
 	refreshDepartureTimes();
@@ -922,9 +926,8 @@ var stationCoords = [
 $('#swapRouteFromTo').click(function(){
 	var fromVal = $('#routeFrom').val();
 	var toVal = $('#routeTo').val();
-	routeFromSelectize.addItem(toVal);
-	routeToSelectize.addItem(fromVal);
-
+	routeFromSelectize.addItem(toVal, true);
+	routeToSelectize.addItem(fromVal, true);
 	refreshRouteDepartureTimes();
 });
 

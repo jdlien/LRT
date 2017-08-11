@@ -120,6 +120,7 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 	AND isDefined('url.to') AND isNumeric(url.to)>
 
 	<cfif url.from IS url.to>
+		<!--- Ugh, this flahes when clicking "swap" --->
 		<p class="gone">You have selected the same stops for your source and destination.<br /><br />Please select a different stop.</p>
 	
 	<cfelse>
