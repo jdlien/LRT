@@ -1,5 +1,7 @@
 <cfset opType="LRT" />
-<cfif isDefined('url.fromStop')><cfset opType="Bus Stop" /></cfif>
+<cfif isDefined('url.fromStop')><cfset opType="Bus Stop" />
+<cfelseif isDefined('url.rid')><cfset opType="Bus Route" />
+</cfif>
 <cfset PageTitle="Edmonton #opType# Schedule">
 <cfset PageTitleHead="#opType# Schedule" />
 
@@ -71,15 +73,15 @@
 
 
 	/* Style to handle selectize dropdowns */
-	#fromStopLabel * {
+	.w2Form .selectizeLabel * {
 		float:none;
 	}
 
-	#fromStopLabel {
+	.selectizeLabel {
 		min-height:30px;
 	}
 
-	#fromStopLabel .selectize-input {
+	.selectizeLabel .selectize-input {
 		font-size:16px;
 		font-weight:normal;
 	}
@@ -105,6 +107,12 @@
 			border-color:#999;
 		}
 
+
+	.selectize-dropdown-content .selected {
+		background-color:inherit;
+		text-decoration:none;
+		color:inherit;
+	}
 
 	.w2Form input,
 	.w2Form button,
@@ -144,9 +152,7 @@
 		overflow:auto;
 	}
 	
-	.w2Form label#fromStopLabel,
-	label[for="fromStop"],
-	label[for="fromStop-selectized"] {
+	.w2Form label.selectizeLabel {
 		overflow:visible;
 		/*display:block;*/
 	}
@@ -254,6 +260,12 @@
 		padding:1px 2px 2px 2px;
 	}
 
+ 	#swapRouteFromTo {
+		text-align: center;
+		float:none;
+		margin:0 auto;
+	}
+
 	#nightModeLink {
 		text-align:center;
 		font-size:13px;
@@ -278,7 +290,7 @@
 			width:100%;
 		}
 
-		#swapFromTo {
+		#swapFromTo, #swapRouteFromTo {
 			width:50%;
 			padding:1px 10px 2px 10px;
 		}
@@ -289,7 +301,7 @@
 			margin-bottom:8px;
 		}
 
-		label#forLabel,
+		label#toLabel,
 		div#timeLabel {
 			padding-top:0;
 		}
@@ -353,8 +365,25 @@
 	}
 
 	.opMode {
-		margin-top:10px;
-		text-align: center;
+		margin-top:5px;
+		display:flex;
+		justify-content:space-around;
+		max-width:400px;
+		flex-wrap:wrap;
+
+	}
+
+	.opMode a, .opMode span {
+		white-space:nowrap;
+		padding:4px 5px;
+		text-decoration: none;
+	}
+
+	.selectedMode {
+		text-decoration: none;
+		color:black;
+		background-color:rgba(0,0,0,.1);
+		border-radius:4px;
 	}
 
 	/* Dark Mode styles for Night */
@@ -363,6 +392,11 @@
 			color:#ccc;
 		}
 		
+		.darkMode .selectedMode {
+			color:rgb(193, 211, 250);
+			background-color:rgba(255,255,255,.1);			
+		}
+
 		.darkMode .pageTitle,
 		.darkMode #nowLink,
 		.darkMode #nearestLink {
@@ -430,10 +464,18 @@
 			border:1px solid #888;
 		}
 
+		.darkMode .selectize-control.single .selectize-input.input-active {
+			background: black;
+		}
+
 		.darkMode .selectize-dropdown {
 			color:white;
 			background-color:black;
 			border-color: #888;
+		}
+
+		.darkMode .selectize-dropdown, .selectize-input, .selectize-input input {
+			color:white;
 		}
 
 		.darkMode .selectize-dropdown .active {
@@ -514,13 +556,46 @@
 	SELECT * FROM vsd.ETS_stops
 </cfquery>
 <!--- This makes for a massive 6500 item select --->
-<label for="fromStop" id="fromStopLabel"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest Four Stops</span></a>
-	<select name="fromStop" id="fromStop" multiple="multiple">
+<label for="fromStop" id="fromStopLabel" class="selectizeLabel"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest Four Stops</span></a>
+	<select name="fromStop" id="fromStop" class="selectizeField" multiple="multiple">
 		<cfoutput query="Stops">
-			<option value="#stop_id#" <cfif isDefined('url.fromStop') AND listContains(url.fromStop, stop_id)>selected</cfif>>#stop_id# #stop_name#</option>
+			<option value="#stop_id#" <cfif listContains(url.fromStop, stop_id)>selected</cfif>>#stop_id# #stop_name#</option>
 		</cfoutput>
 	</select>
 </label>
+
+
+<!--- If url.rid is specified, we show the interface for selecting a route --->
+<cfelseif isDefined('url.rid')>
+
+<cfquery name="Routes" dbtype="ODBC" datasource="SecureSource">
+	SELECT * FROM vsd.ETS_routes ORDER BY route_id
+</cfquery>
+<!--- This makes for a massive 6500 item select --->
+<label for="rid" id="ridLabel" class="selectizeLabel">Bus Route
+	<select name="rid" id="rid" class="selectizeField">
+		<option></option>
+		<cfoutput query="Routes">
+			<option value="#route_id#" <cfif url.rid IS route_id>selected</cfif>>#route_id# #route_long_name#</option>
+		</cfoutput>
+	</select>
+</label>
+
+<label for="routeFrom" id="routeFromLabel" class="selectizeLabel">Departing From
+	<select name="routeFrom" id="routeFrom" class="selectizeField">
+	</select>
+</label>
+
+<label for="swapRouteFromTo" id="swapButtonLabel">
+	<button type="button" id="swapRouteFromTo">&#8593; swap &#8595;</button>
+</label>
+
+<label for="routeTo" id="routeToLabel" class="selectizeLabel">Travelling To
+	<select name="routeTo" id="routeTo" class="selectizeField">
+	</select>
+</label>
+
+
 
 
 <cfelse>
@@ -538,7 +613,7 @@
 	<button type="button" id="swapFromTo">&#8593; swap &#8595;</button>
 </label>
 
-<label for="to" id="forLabel">Travelling To
+<label for="to" id="toLabel">Travelling To
 	<select name="to" id="to">
 		<cfoutput query="Stations">
 			<option value="#StationID#" <cfif isDefined('url.to') AND url.to IS StationID>selected<cfelseif NOT isDefined('url.to') AND StationID IS 15>selected</cfif>>#StationName#</option>
@@ -582,6 +657,8 @@
 <!--- this is where the tables will go --->
 <cfif isDefined('url.fromStop')>
 	<cfinclude template="stopTimesGTFS.cfm" />	
+<cfelseif isDefined('url.rid')>
+	<cfinclude template="departureTimesRoutesGTFS.cfm" />
 <cfelse>
 	<cfinclude template="departureTimesGTFS.cfm" />
 </cfif>
@@ -590,17 +667,36 @@
 <p style="font-size:13px;color:#555;"><b>Note:</b> Times may vary by 2 minutes.</p>
 
 
+<div class="opMode">
+<cfoutput>
+
+<cfif NOT isDefined('url.fromStop') AND NOT isDefined('url.rid')>
+	<span class="selectedMode" href="?">LRT Schedule</span>
+<cfelse>
+	<a href="?">LRT Schedule</a>
+</cfif>
+
+<cfif isDefined('url.fromStop')>
+	<span class="selectedMode">Bus Stop Times</span>	
+<cfelse>
+	<a href="?fromStop">Bus Stop Times</a>	
+</cfif>
+
+<cfif isDefined('url.rid')>
+	<span class="selectedMode">Bus Routes</span>
+<cfelse>
+	<a href="?rid">Bus Routes</a>
+</cfif>
+
+</cfoutput>
+</div>
+
 
 <!-- Page contents go above here -->
 </div><!--.page .w2Contents-->
 </div><!--.container .clearfix-->
-<div class="opMode">
-	<cfif isDefined('url.fromStop')>
-		<a href="?">LRT Schedule</a>
-	<cfelse>
-		<a href="?fromStop">Bus Stop Schedule</a>
-	</cfif>
-</div>
+
+
 <p id="nightModeLink">
 	<cfif isDefined('cookie.lrt_dark') AND cookie.lrt_dark IS true>
 		<a href="javascript:void(0);">&#x2600; Day Mode</a>
@@ -630,7 +726,6 @@ function refreshDepartureTimes() {
 		updateArrivalTimes();
 		bindShowArrival();
 	});
-
 }
 
 // loads new bus stop times via ajax
@@ -651,6 +746,71 @@ function refreshStopTimes() {
 	});
 
 }
+
+// Updates the dropdowns for from/to stops for a route
+function refreshRouteStops() {
+	$.get('routeStops.cfm', {rid:$('#rid').val()}).done(function(data) {
+		// remove existing options
+		// $('#routeFrom, #routeTo').html('');
+		routeFromSelectize.clearOptions();
+		routeToSelectize.clearOptions();
+
+		routeFromSelectize.addOption(data);
+		routeToSelectize.addOption(data);
+		// $('#routeFrom, #routeTo').append('<option></option>');
+		//Loop through data field and add an option for each
+		// $.each(data.DATA, function(i, value) {
+		// 	$('#routeFrom, #routeTo').append('<option value="'+data.DATA[i][0]+'">'+data.DATA[i][0]+' '+data.DATA[i][1]+'</option>');
+		// });
+
+
+
+		// $('#routeFrom').selectize({highlight:false});
+
+		<cfif isDefined('url.routeFrom')>
+			routeFromSelectize.addItem(<cfoutput>#url.routeFrom#</cfoutput>);
+		</cfif>
+		<cfif isDefined('url.routeTo')>
+			routeToSelectize.addItem(<cfoutput>#url.routeTo#</cfoutput>);
+		</cfif>
+	});
+}
+
+// loads new route stops into routeFrom/routeTo dropdowns when route is changed
+$('#rid').change(function() {
+	refreshRouteStops();
+});
+
+
+
+$('#routeFrom, #routeTo').change(function(){
+	refreshRouteDepartureTimes();
+});
+
+
+// loads new departure times via ajax
+function refreshRouteDepartureTimes() {
+	var fromVal = $('#routeFrom').val();
+	var toVal = $('#routeTo').val();
+	var timeVal = $('#time').val();
+	var dowVal = $('#dow').val();
+	var rid = $('#rid').val();
+	if (dowVal.length > 0 || timeVal.length > 0) $('#nowLink').show();
+	else $('#nowLink').hide();
+
+	$.get('departureTimesRoutesGTFS.cfm', {rid:rid, from:fromVal, to:toVal, time:timeVal, dow:dowVal<cfif isDefined('url.destTime')>, destTime:true</cfif>}).done(function(data) {
+		$('#departures').html(data);
+		// update page URL so that you get the same data if you hit refresh
+		window.history.pushState("", "Bus Route Schedule", "?rid="+rid+"&routeFrom="+fromVal+"&routeTo="+toVal+"&time="+timeVal+"&dow="+dowVal<cfif isDefined('url.destTime')>+"&destTime"</cfif>);
+		// Refresh the arrival times so they don't go blank for a couple seconds
+		updateArrivalTimes();
+		bindShowArrival();
+	});
+}
+
+
+
+
 
 
 $('#from, #to').change(function(){
@@ -683,6 +843,7 @@ $('#swapFromTo').click(function(){
 
 	refreshDepartureTimes();
 });
+
 
 $('#timeLabelText').click(function(){
 	$('#time').val('');
@@ -755,6 +916,36 @@ var stationCoords = [
 		$fromStopselect = $("#fromStop").selectize({highlight:false});
 		selectize = $fromStopselect[0].selectize; // This stores the selectize object to a variable (with name 'selectize')
 	});
+
+<cfelseif isDefined('url.rid')>
+
+$('#swapRouteFromTo').click(function(){
+	var fromVal = $('#routeFrom').val();
+	var toVal = $('#routeTo').val();
+	routeFromSelectize.addItem(toVal);
+	routeToSelectize.addItem(fromVal);
+
+	refreshRouteDepartureTimes();
+});
+
+var $ridselect;
+var ridSelectize;
+var $routeFromselect;
+var routeFromSelectize;
+var $routeToselect;
+var routeToSelectize;
+	$(document).ready(function() {
+		// Turns out that there's a bad bug in highlighting that eats characters as you type, so we disable that
+		$ridselect = $("#rid").selectize({highlight:false});
+		ridSelectize = $ridselect[0].selectize;
+		$routeFromselect = $('#routeFrom').selectize({highlight:false});
+		routeFromSelectize = $routeFromselect[0].selectize;
+		$routeToselect = $('#routeTo').selectize({highlight:false});
+		routeToSelectize = $routeToselect[0].selectize;		
+		refreshRouteStops();
+		//selectize = $ridselect[0].selectize; // This stores the selectize object to a variable (with name 'selectize')
+	});
+
 
 </cfif>
 
