@@ -65,6 +65,16 @@ Each station shows twice (once for each track), except for endpoints.
 9945	DL MacDonald Platform
 7977	Clareview Station
 
+/* Notes:
+Okay, so there's no way to tell which direction each stop goes, really, afaik.
+There are sometimes multiple stops for a station. Not always.
+
+--Each stop has an id, name, and lat/lon
+--Figuring out which stops are for trains is a pain in the ass. Why couldn't they just have a type field on here??
+I suppose I can add one...
+
+*/
+
 
 
 2. Figure out the stop times for a given stop_id
@@ -125,3 +135,14 @@ CPU time = 52344 ms,  elapsed time = 38354 ms.
 
 New view with int hours and int minutes
 CPU time = 47861 ms,  elapsed time = 35347 ms.
+
+
+To do:
+Fix the bus stop view so that you can change the time
+-Allow loading page with bus stop
+
+
+
+Next step:
+-Show list of routes
+-Once a route is selected, dropdowns for "from" and "to" repopulate with the relevant stops for the route

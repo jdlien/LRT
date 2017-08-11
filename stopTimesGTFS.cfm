@@ -65,7 +65,7 @@ description="Accepts FROM stop_id and a datetime and outputs a table with releva
 	<table class="altColors">
 	<thead>
 		<tr>
-			<th colspan="4">Departures from #fromStop#<br />#StopInfo.stop_name#</th>
+			<th colspan="4">Departures from ###fromStop#<br />#StopInfo.stop_name#</th>
 		</tr>
 	</thead>
 	<tbody>

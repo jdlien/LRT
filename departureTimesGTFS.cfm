@@ -229,11 +229,35 @@ description="Accepts FROM and TO station IDs, and a datetime and outputs a table
 			<cfset url.to = ConnectingStation.StationID />
 			<!--- And url.from stays the same, obviously --->
 
+			<cfquery name="Route1" dbtype="ODBC" datasource="SecureSource">
+				SELECT * FROM vsd.ETS_routes WHERE route_id=
+				(
+					SELECT MAX(t.route_id) AS Route_ID FROM vsd.ETS_stop_times stime
+					JOIN vsd.ETS_trips t ON stime.trip_id=t.trip_id
+					WHERE stop_id IN (#fromStation.stop_id1#,#fromStation.stop_id2#)
+				)
+			</cfquery>
+
+			<cfquery name="toStation2" dbtype="ODBC" datasource="SecureSource">
+				SELECT * FROM vsd.EZLRTStations WHERE StationID=#url.to2#
+			</cfquery>
+
+			<cfquery name="Route2" dbtype="ODBC" datasource="SecureSource">
+				SELECT * FROM vsd.ETS_routes WHERE route_id=(
+					SELECT MAX(t.route_id) AS Route_ID FROM vsd.ETS_stop_times stime
+					JOIN vsd.ETS_trips t ON stime.trip_id=t.trip_id
+					WHERE stop_id IN (#toStation2.stop_id1#,#toStation2.stop_id2#)
+				)
+			</cfquery>
+
+
 			<!--- Recursively call getDepartures() from itself. --->
-			<h2 class="leg">Leg 1 of 2</h2>
-			<cfoutput>#getDepartures(url.from, url.to, CurrentTime)#</cfoutput>
-			<h2 class="leg">Leg 2 of 2</h2>
-			<cfoutput>#getDepartures(url.from2, url.to2, variables.CurrentTime)#</cfoutput>
+			<cfoutput>
+			<h2 class="leg">Leg 1: <cfif Route1.route_type IS 3>#Route1.route_id# </cfif>#Route1.route_long_name#</h2> <!--- line/route of url.from --->
+			#getDepartures(url.from, url.to, CurrentTime)#
+			<h2 class="leg">Leg 2:  <cfif Route2.route_type IS 3>#Route2.route_id# </cfif>#Route2.route_long_name#</h2> <!--- line/route of url.to2 --->
+			#getDepartures(url.from2, url.to2, variables.CurrentTime)#
+			</cfoutput>
 			<cfreturn>
 		<cfelse>
 			<p class="error">You have chosen two stations with no connection between them.</p>

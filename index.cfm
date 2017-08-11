@@ -26,7 +26,8 @@
 	<!--- Geo calculation stuff --->
 	<script defer src="latlon-spherical.min.js"></script>
     <script defer src="dms.min.js"></script>
-    <script defer src="/Javascript/select2-4.0.3/dist/js/select2.min.js"></script>
+
+	<script src="/Javascript/selectize/dist/js/standalone/selectize.min.js"></script>
 
 	<link rel="shortcut icon" type="image/x-icon" href="/favicon.ico" />
 	<link rel="icon" type="image/png" href="/favicon.png" />
@@ -55,7 +56,7 @@
 	<div class="page w2Contents">
 	<!-- Page contents go below here -->
     
-	<link href="/Javascript/select2-4.0.3/dist/css/select2.min.css" type="text/css" rel="stylesheet" />
+	<link href="/Javascript/selectize/dist/css/selectize.css" type="text/css" rel="stylesheet" />
   
     <cfoutput><cfif len(PageTitle)><div class="pageTitle">#PageTitle#</div></cfif></cfoutput>
 
@@ -67,27 +68,43 @@
 		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 	}
 
-	/* Style to handle select2 dropdown */
-	label[for="fromStop"] {
+
+
+	/* Style to handle selectize dropdowns */
+	#fromStopLabel * {
+		float:none;
+	}
+
+	#fromStopLabel {
 		min-height:30px;
 	}
 
-	.select2-container {
+	#fromStopLabel .selectize-input {
+		font-size:16px;
 		font-weight:normal;
-		float:right;
 	}
 
-	.select2-selection {
-
+	.selectize-dropdown, .selectize-input, .selectize-input input {
+		font-size:14px;
+		font-weight:normal;
 	}
 
-	input.select2-search__field {
-		font-size:inherit;
-	}
+	.selectize-dropdown [data-selectable] .highlight {
+    	background: rgba(255, 255, 50, 0.3);
+    }
 
-	.w2Form label {
-		overflow:auto;
-	}
+	.selectize-control.multi .selectize-input > div {
+			border-radius:4px;
+			border:1px solid #AAA;
+		}
+
+	.selectize-control.multi .selectize-input > div.active {
+			background-color:#DDD;
+			color:black;
+			border-width:1px;
+			border-color:#999;
+		}
+
 
 	.w2Form input,
 	.w2Form button,
@@ -123,8 +140,23 @@
     	/*line-height:2.5em;*/
 	}
 
+	.w2Form label {
+		overflow:auto;
+	}
+	
+	.w2Form label#fromStopLabel,
+	label[for="fromStop"],
+	label[for="fromStop-selectized"] {
+		overflow:visible;
+		/*display:block;*/
+	}
+
 	.leg {
 		margin-bottom:1px;
+	}
+
+	.leg .smaller {
+		font-size:18px;
 	}
 	
 	.trainsFromTo {
@@ -181,6 +213,7 @@
 	.departures table {
 		margin:0;
 		font-size:17px;
+		width:400px;
 	}
 
 	.altColors tr {
@@ -224,7 +257,7 @@
 	#nightModeLink {
 		text-align:center;
 		font-size:13px;
-		margin:5px;
+		margin:15px;
 	}
 
 	#nightModeLink a {
@@ -270,15 +303,6 @@
 			width:auto;
 		}
 
-
-		label[for="fromStop"] {
-			overflow:visible;
-			/*display:block;*/
-		}
-		/* select 2 responsive styling */
-		.select2-container {
-		     float: none; 
-		}		
 
 	}
 
@@ -400,26 +424,33 @@
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 		}
 
-		.darkMode .select2-selection {
+		.darkMode .selectize-input {
 			background-color:black;
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 			border:1px solid #888;
 		}
 
-		.darkMode .select2-container--default .select2-selection--single .select2-selection__rendered {
+		.darkMode .selectize-dropdown {
 			color:white;
-		}		
-		
-		.darkMode .select2-dropdown {
 			background-color:black;
+			border-color: #888;
 		}
 
-		.darkMode .select2-container--default .select2-results__option[aria-selected=true] {
-    		background-color: #222;
+		.darkMode .selectize-dropdown .active {
+			background-color:#DDD;
+			color: black;
 		}
 
-		.darkMode .select2-container--default .select2-selection--multiple .select2-selection__choice {
-			background-color:black;
+		.darkMode .selectize-control.multi .selectize-input > div {
+			background-color:#111;
+			color:white;
+			border-color:#333;
+		}
+
+		.darkMode .selectize-control.multi .selectize-input > div.active {
+			background-color:#444;
+			color:white;
+			border-color:#777;
 		}
 
 		.darkMode input, 
@@ -433,13 +464,6 @@
 			background-image:linear-gradient(to bottom, rgba(100,100,100,0.45) 0%,rgba(0,0,0,0) 100%);
 		}
 
-		.darkMode .select2-container--default .select2-selection--multiple .select2-selection__choice {
-			border-color:#666;
-		}
-
-		.darkMode .select2-container--default.select2-container--focus .select2-selection--multiple {
-			border-color: #aaa;
-		}
 
 		.darkMode .due {
 			color:#00A000;
@@ -490,10 +514,10 @@
 	SELECT * FROM vsd.ETS_stops
 </cfquery>
 <!--- This makes for a massive 6500 item select --->
-<label for="fromStop"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest</span></a>
-	<select name="fromStop" id="fromStop" class="select2select" multiple="multiple">
+<label for="fromStop" id="fromStopLabel"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest Four Stops</span></a>
+	<select name="fromStop" id="fromStop" multiple="multiple">
 		<cfoutput query="Stops">
-			<option value="#stop_id#" <cfif isDefined('url.fromStop') AND url.fromStop IS stop_id>selected</cfif>>#stop_id# #stop_name#</option>
+			<option value="#stop_id#" <cfif isDefined('url.fromStop') AND listContains(url.fromStop, stop_id)>selected</cfif>>#stop_id# #stop_name#</option>
 		</cfoutput>
 	</select>
 </label>
@@ -556,7 +580,11 @@
 
 <div class="departures" id="departures">
 <!--- this is where the tables will go --->
-<cfinclude template="departureTimesGTFS.cfm" />
+<cfif isDefined('url.fromStop')>
+	<cfinclude template="stopTimesGTFS.cfm" />	
+<cfelse>
+	<cfinclude template="departureTimesGTFS.cfm" />
+</cfif>
 
 </div><!--departures-->
 <p style="font-size:13px;color:#555;"><b>Note:</b> Times may vary by 2 minutes.</p>
@@ -583,9 +611,6 @@
 
 
 <script>
-$(document).ready(function() {
-  $(".select2select").select2();
-});
 
 
 // loads new departure times via ajax
@@ -628,13 +653,26 @@ function refreshStopTimes() {
 }
 
 
-$('#from, #to, #time, #dow').change(function(){
+$('#from, #to').change(function(){
 	refreshDepartureTimes();
-})
+});
 
 $('#fromStop').change(function(){
 	refreshStopTimes();
-})
+});
+
+<cfif isDefined('url.fromStop')>
+$('#time, #dow').change(function(){
+	refreshStopTimes();
+});
+<cfelse>
+$('#time, #dow').change(function(){
+	refreshDepartureTimes();
+});
+
+</cfif>
+
+
 
 
 $('#swapFromTo').click(function(){
@@ -706,12 +744,21 @@ var stationCoords = [
 
 <!--- Include a table of bus stop coordinates if relevant --->
 <cfif isDefined('url.fromStop')>
-var stopCoords = [
-<cfoutput query="Stops">
-<cfif CurrentRow GT 1>,</cfif>{id:#stop_id#, lat:#trim(stop_lat)#, lon:#trim(stop_lon)#}
-</cfoutput>];
+	var $fromStopselect;
+	var selectize;
+	var stopCoords = [
+	<cfoutput query="Stops">
+	<cfif CurrentRow GT 1>,</cfif>{id:#stop_id#, lat:#trim(stop_lat)#, lon:#trim(stop_lon)#}
+	</cfoutput>];
+	$(document).ready(function() {
+		// Turns out that there's a bad bug in highlighting that eats characters as you type, so we disable that
+		$fromStopselect = $("#fromStop").selectize({highlight:false});
+		selectize = $fromStopselect[0].selectize; // This stores the selectize object to a variable (with name 'selectize')
+	});
 
 </cfif>
+
+
 
 
 // Experimental calculation of distance from stations
@@ -734,9 +781,8 @@ function findClosestStation(position) {
     var userLon = position.coords.longitude;
 
     var closestStation="";
-    var closestStop1="";
-    var closestStop2="";
-    var closestStop3="";
+    var closestStop1, closestStop2, closestStop3, closestStop4 ="";
+
     // Default to about the furthest point on earth in meters 21,000 km
     var closestDistance="21000000";
 
@@ -746,6 +792,7 @@ function findClosestStation(position) {
 		var dist=geoDistance(userLat, userLon, stop.lat, stop.lon);
 		if (dist < closestDistance) {
 			closestDistance=dist;
+			closestStop4=closestStop3;
 			closestStop3=closestStop2;
 			closestStop2=closestStop1;
 			closestStop1=stop.id;
@@ -756,10 +803,12 @@ var closeStops = new Array();
 	closeStops[0] = closestStop1;
 	closeStops[1] = closestStop2;
 	closeStops[2] = closestStop3;
+	closeStops[3] = closestStop4;
 
 
-	$('#fromStop').val(closeStops);
-	$('#fromStop').trigger('change');
+	selectize.setValue(closeStops);
+	// $('#fromStop').val(closeStops);
+	// $('#fromStop').trigger('change');
     <cfelse>
 
 	// Loop through all stations 
