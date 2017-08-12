@@ -1,9 +1,9 @@
-<cfset opType="LRT" />
-<cfif isDefined('url.fromStop')><cfset opType="Bus Stop" />
-<cfelseif isDefined('url.rid')><cfset opType="Bus Route" />
+<cfset opType="LRT Schedule" />
+<cfif isDefined('url.fromStop')><cfset opType="Bus Stop Schedule" />
+<cfelseif isDefined('url.rid')><cfset opType="Bus Routes" />
 </cfif>
-<cfset PageTitle="Edmonton #opType# Schedule">
-<cfset PageTitleHead="#opType# Schedule" />
+<cfset PageTitle="Edmonton #opType#">
+<cfset PageTitleHead="#opType#" />
 
 <!--- Toggle Dark Mode --->
 <cfif isDefined('url.dark')>
@@ -794,7 +794,7 @@ function refreshRouteToStops() {
 	var routeFrom = $('#routeFrom').val();
 	$.get('routeStops.cfm', {rid:$('#rid').val(), routeFrom:routeFrom}).done(function(data) {
 		routeToSelectize.clearOptions();
-		routeToSelectize.addOption(data);
+		routeToSelectize.addOption(data, false);
 	});
 }
 
@@ -950,8 +950,12 @@ var stationCoords = [
 $('#swapRouteFromTo').click(function(){
 	var fromVal = $('#routeFrom').val();
 	var toVal = $('#routeTo').val();
+	routeFromSelectize.clear(true);
+	routeToSelectize.clear(true);
 	routeFromSelectize.addItem(toVal, true);
+	refreshRouteToStops();
 	routeToSelectize.addItem(fromVal, true);
+	// Not sure what'll happen here, since the stop may not exist... likely will be blank
 	refreshRouteDepartureTimes();
 });
 
