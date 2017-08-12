@@ -761,6 +761,9 @@ function refreshStopTimes() {
 
 }
 
+//signals brand new load... feels like a crappy hack
+var newLoad = true;
+
 // Updates the dropdowns for from/to stops for a route
 function refreshRouteStops() {
 	$.get('routeStops.cfm', {rid:$('#rid').val()}).done(function(data) {
@@ -780,21 +783,35 @@ function refreshRouteStops() {
 
 
 		// $('#routeFrom').selectize({highlight:false});
+		if (newLoad) {
+		<cfif isDefined('url.routeFrom') AND isNumeric(url.routeFrom)>
+			routeFromSelectize.addItem(<cfoutput>#url.routeFrom#</cfoutput>,true);
+		</cfif>
+		<cfif isDefined('url.routeTo') AND isNumeric(url.routeTo)>
+			routeToSelectize.addItem(<cfoutput>#url.routeTo#</cfoutput>,true);
+			refreshRouteToStops(<cfoutput>#url.routeTo#</cfoutput>);
+		<cfelse>
+			refreshRouteToStops();
+		</cfif>
+			newLoad=false;
 
-		<cfif isDefined('url.routeFrom')>
-			routeFromSelectize.addItem(<cfoutput>#url.routeFrom#</cfoutput>);
-		</cfif>
-		<cfif isDefined('url.routeTo')>
-			routeToSelectize.addItem(<cfoutput>#url.routeTo#</cfoutput>);
-		</cfif>
+			// I think I just need to do this on page load...
+			refreshRouteDepartureTimes();
+		}
+
 	});
 }
 
-function refreshRouteToStops() {
+function refreshRouteToStops(stopId) {
 	var routeFrom = $('#routeFrom').val();
 	$.get('routeStops.cfm', {rid:$('#rid').val(), routeFrom:routeFrom}).done(function(data) {
 		routeToSelectize.clearOptions();
-		routeToSelectize.addOption(data, false);
+		routeToSelectize.addOption(data);
+
+		if (stopId) {
+			routeToSelectize.addItem(stopId);
+		}
+
 	});
 }
 
@@ -950,13 +967,15 @@ var stationCoords = [
 $('#swapRouteFromTo').click(function(){
 	var fromVal = $('#routeFrom').val();
 	var toVal = $('#routeTo').val();
-	routeFromSelectize.clear(true);
-	routeToSelectize.clear(true);
-	routeFromSelectize.addItem(toVal, true);
-	refreshRouteToStops();
-	routeToSelectize.addItem(fromVal, true);
-	// Not sure what'll happen here, since the stop may not exist... likely will be blank
-	refreshRouteDepartureTimes();
+	if (toVal.length > 0) {
+		routeFromSelectize.clear(true);
+		routeToSelectize.clear(true);
+		routeFromSelectize.addItem(toVal, true);
+		refreshRouteToStops();
+		routeToSelectize.addItem(fromVal, true);
+		// Not sure what'll happen here, since the stop may not exist... likely will be blank
+		refreshRouteDepartureTimes();
+	}
 });
 
 var $ridselect;
