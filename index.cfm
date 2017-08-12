@@ -109,9 +109,11 @@
 
 
 	.selectize-dropdown-content .selected {
-		background-color:inherit;
+		/*background-color:inherit;*/
 		text-decoration:none;
 		color:inherit;
+		box-shadow:none;
+		-webkit-box-shadow:none;
 	}
 
 	.w2Form input,
@@ -479,8 +481,8 @@
 		}
 
 		.darkMode .selectize-dropdown .active {
-			background-color:#DDD;
-			color: black;
+			background-color:#555;
+			color: white;
 		}
 
 		.darkMode .selectize-control.multi .selectize-input > div {
@@ -490,9 +492,21 @@
 		}
 
 		.darkMode .selectize-control.multi .selectize-input > div.active {
-			background-color:#444;
+			background-color:#555;
 			color:white;
 			border-color:#777;
+		}
+
+		.darkMode .selectize-control.multi .selectize-input > div.active.selected {
+			color:white;
+		}
+
+		.darkMode .selectize-dropdown-content .selected {
+			background-color:black;
+		}
+
+		.darkMode .selectize-dropdown-content .selected.active {
+			background-color:#555;
 		}
 
 		.darkMode input, 
@@ -776,12 +790,22 @@ function refreshRouteStops() {
 	});
 }
 
+function refreshRouteToStops() {
+	var routeFrom = $('#routeFrom').val();
+	$.get('routeStops.cfm', {rid:$('#rid').val(), routeFrom:routeFrom}).done(function(data) {
+		routeToSelectize.clearOptions();
+		routeToSelectize.addOption(data);
+	});
+}
+
 // loads new route stops into routeFrom/routeTo dropdowns when route is changed
 $('#rid').change(function() {
 	refreshRouteStops();
 });
 
-
+$('#routeFrom').change(function(){
+	refreshRouteToStops();
+});
 
 $('#routeFrom, #routeTo').change(function(){
 	refreshRouteDepartureTimes();

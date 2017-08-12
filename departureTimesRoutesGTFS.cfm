@@ -17,7 +17,7 @@
 	</cfswitch>
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="false" />
+<cfsetting showdebugoutput="true" />
 <cfsetting requesttimeout="12" />
 <!--- set to 12s as safeguard against runaway recursive function. This page gets really slow, though :(  --->
 
@@ -26,8 +26,8 @@
 description="Accepts FROM and TO stop IDs, and a datetime and outputs a table with relevant stops at that stop to the destination">
 	<cfargument name="rid" required="true" type="numeric" />
 	<cfargument name="from" required="true" type="numeric" />
-	<cfargument name="to" required="true" type="numeric" />
 	<cfargument name="CurrentTime" required="true" type="date" />
+	<cfargument name="to" required="false" type="numeric" />
 
 	<!--- Set the says of the week --->
 	<cfset DOW = CurDOW = DayOfWeek(CurrentTime) />
@@ -53,29 +53,41 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 	<cfquery name="fromStop" dbtype="ODBC" datasource="SecureSource">
 		SELECT * FROM vsd.ETS_stops WHERE stop_id=#from#
 	</cfquery>
-
-	<cfquery name="toStop" dbtype="ODBC" datasource="SecureSource">
-		SELECT * FROM vsd.ETS_stops WHERE stop_id=#to#
-	</cfquery>
+	
+	<cfif isDefined('to') AND isNumeric(to)>
+		<cfquery name="toStop" dbtype="ODBC" datasource="SecureSource">
+			SELECT * FROM vsd.ETS_stops WHERE stop_id=#to#
+		</cfquery>
+	</cfif>
 
 	<!--- Query that should show the relevant schedule times. --->
-	<cfquery name="DepartureTimes" dbtype="ODBC" datasource="SecureSource">
-		SELECT * FROM (
-		SELECT
-			(SELECT TOP 1 sdt2.ActualDateTime FROM vsd.ETS_trip_stop_datetimes sdt2
-			WHERE stop_id=#to#
-			AND trip_id=sdt.trip_id
-			AND stop_sequence > sdt.stop_sequence
-			AND ActualDateTime > #CurrentTime#
-			ORDER BY sdt2.ActualDateTime
-		) AS dest_arrival_datetime,
-		* FROM vsd.ETS_trip_stop_datetimes sdt
-		WHERE route_id=#rid#
-		AND stop_id=#from#
-		AND ActualDateTime > #CurrentTime# AND ActualDateTime < #MaxFutureTime#
-		) AS stops WHERE dest_arrival_datetime IS NOT NULL
-		ORDER BY ActualDateTime
-	</cfquery>
+	<cfif isDefined('to') AND isNumeric(to)>
+		<cfquery name="DepartureTimes" dbtype="ODBC" datasource="SecureSource">
+			SELECT * FROM (
+			SELECT
+				(SELECT TOP 1 sdt2.ActualDateTime FROM vsd.ETS_trip_stop_datetimes sdt2
+				WHERE stop_id=#to#
+				AND trip_id=sdt.trip_id
+				AND stop_sequence > sdt.stop_sequence
+				AND ActualDateTime > #CurrentTime#
+				ORDER BY sdt2.ActualDateTime
+			) AS dest_arrival_datetime,
+			* FROM vsd.ETS_trip_stop_datetimes sdt
+			WHERE route_id=#rid#
+			AND stop_id=#from#
+			AND ActualDateTime > #CurrentTime# AND ActualDateTime < #MaxFutureTime#
+			) AS stops WHERE dest_arrival_datetime IS NOT NULL
+			ORDER BY ActualDateTime
+		</cfquery>	
+	<cfelse>
+		<cfquery name="DepartureTimes" dbtype="ODBC" datasource="SecureSource">
+			SELECT NULL AS dest_arrival_datetime, * FROM vsd.ETS_trip_stop_datetimes sdt
+			WHERE route_id=#rid#
+			AND stop_id=#from#
+			AND ActualDateTime > #CurrentTime# AND ActualDateTime < #MaxFutureTime#
+			ORDER BY ActualDateTime
+		</cfquery>		
+	</cfif>
 
 
 
@@ -85,12 +97,16 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 	<table class="altColors">
 	<thead>
 		<tr>
-			<th colspan="4">Departures from #fromStop.stop_name# <span class="nowrap">to #toStop.stop_name#</span><!-- after #TimeFormat(CurrentTime, "h:mm tt")#-->
+			<th colspan="4">Departures from #fromStop.stop_name#
+			<cfif isDefined('to') and isNumeric(to)>
+			<span class="nowrap">to #toStop.stop_name#</span><!-- after #TimeFormat(CurrentTime, "h:mm tt")#-->
 			<div class="tripTime"><cfif DepartureTimes.recordCount>
 			<cfif IsDate(DepartureTimes.dest_arrival_datetime)>Trip time is <b>#dateDiff("n", DepartureTimes.ActualDateTime, DepartureTimes.dest_arrival_datetime)# minutes</b></cfif>
 			<cfelse>
 				There are no departures during this time. 
-			</cfif></div>
+			</cfif>
+			</cfif>
+			</div>
 			</th>
 		</tr>
 	</thead>
@@ -103,7 +119,9 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 			<td class="cD"></td>
 		</tr>
 		<tr class="dR">
+			<cfif isDefined('to') and isNumeric(to)>
 			<td class="dA" colspan="3">Arrive at #toStop.stop_name# <cfif IsDate(DepartureTimes.dest_arrival_datetime)>at #TimeFormat(dest_arrival_datetime, "h:mm tt")#</cfif></td>
+			</cfif>
 		</tr>
 	</cfloop>
 	</tbody>
@@ -116,10 +134,9 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 
 
 <cfif isDefined('url.rid') AND isNumeric(url.rid)
-	AND isDefined('url.from') AND isNumeric(url.from)
-	AND isDefined('url.to') AND isNumeric(url.to)>
+	AND isDefined('url.from') AND isNumeric(url.from)>
 
-	<cfif url.from IS url.to>
+	<cfif isDefined('url.to') AND url.from IS url.to>
 		<!--- Ugh, this flahes when clicking "swap" --->
 		<p class="gone">You have selected the same stops for your source and destination.<br /><br />Please select a different stop.</p>
 	
@@ -149,7 +166,12 @@ description="Accepts FROM and TO stop IDs, and a datetime and outputs a table wi
 
 
 		<!--- Here's where the magic happens. Call the getRouteDepartures function --->
-		<cfoutput>#getRouteDepartures(url.rid, url.from, url.to, currentTime)#</cfoutput>
+		<cfif isDefined('url.to') and isNumeric(url.to)>
+			<cfoutput>#getRouteDepartures(url.rid, url.from, currentTime, url.to)#</cfoutput>
+		<cfelse>
+			<cfoutput>#getRouteDepartures(url.rid, url.from, currentTime)#</cfoutput>
+		</cfif>
+
 
 	</cfif><!---if from IS to / else --->
 

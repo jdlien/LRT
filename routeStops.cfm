@@ -20,12 +20,30 @@
 	ORDER BY min_stop_sequence
 </cfquery> --->
 
+<!--- If I have a url.routeFrom id, I will only return the stops that are a destination for a trip AFTER the specified route
+Hopefully this will make it much easier to select the appropriate stop
+--->
+<cfif isDefined('url.routeFrom') AND isNumeric(url.routeFrom)>
+
+<cfquery name="routeStops" dbtype="ODBC" datasource="SecureSource">
+	SELECT DISTINCT sdt.stop_id, stop_name, stop_lat, stop_lon FROM vsd.ETS_trip_stop_datetimes sdt
+	JOIN vsd.ETS_stops s ON s.stop_id=sdt.stop_id
+	WHERE route_id=#url.rid#
+	-- Does the current route have any instances
+	-- where it is in the same trip as the routeFrom
+	-- and has a stop_sequence that is higher?
+	AND stop_sequence > (SELECT stop_sequence FROM vsd.ETS_stop_times WHERE trip_id = sdt.trip_id AND  stop_id=#url.routeFrom#)
+</cfquery>
+<cfelse>
+
 <cfquery name="routeStops" dbtype="ODBC" datasource="SecureSource">
 	SELECT DISTINCT sdt.stop_id, stop_name, stop_lat, stop_lon FROM vsd.ETS_trip_stop_datetimes sdt
 	JOIN vsd.ETS_stops s ON s.stop_id=sdt.stop_id
 	WHERE route_id=#url.rid#
 </cfquery>
-<!--- Create a simple datastructure that I can use with selectize to populate dropdowns --->
+
+</cfif>
+<!--- Create a simple data structure that I can use with selectize to populate dropdowns --->
 <cfset stopOptions = ArrayNew(1) />
 <cfloop query="routeStops">
 	<cfset stop = structNew() />
