@@ -255,7 +255,7 @@
 
 
 
-	#swapFromTo {
+	#swapFromTo, #swapRouteFromTo {
 		font-size:13px;
 		padding:1px 2px 2px 2px;
 	}
@@ -474,7 +474,7 @@
 			border-color: #888;
 		}
 
-		.darkMode .selectize-dropdown, .selectize-input, .selectize-input input {
+		.darkMode .selectize-dropdown, .darkMode .selectize-input, .darkMode .selectize-input input {
 			color:white;
 		}
 
