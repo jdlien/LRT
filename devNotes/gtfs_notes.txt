@@ -146,3 +146,9 @@ Fix the bus stop view so that you can change the time
 Next step:
 -Show list of routes
 -Once a route is selected, dropdowns for "from" and "to" repopulate with the relevant stops for the route
+
+
+--This query gets all the stops for a particular route. ~16ms
+SELECT DISTINCT stime.stop_id, stop_code, stop_name, stop_lat, stop_lon, location_type FROM vsd.ETS_stop_times stime
+JOIN vsd.ETS_stops s ON s.stop_id=stime.stop_id
+WHERE trip_id IN (SELECT trip_id FROM vsd.ETS_trips WHERE route_id='501')

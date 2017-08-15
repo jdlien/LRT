@@ -1,0 +1,13 @@
+8.0
+11
+1	SQLCHAR	0	9999	","		2	trip_id	""
+2	SQLCHAR	0	9999	","		3	arrival_time	""
+3	SQLCHAR	0	9999	":"		4	departure_hour	""
+4	SQLCHAR	0	9999	":"		5	departure_minute	""
+5	SQLCHAR	0	9999	","		6	departure_seconds	""
+6	SQLCHAR	0	9999	","		7	stop_id	""
+7	SQLCHAR	0	9999	","		8	stop_sequence	""
+8	SQLCHAR	0	9999	","		9	stop_headsign	""
+9	SQLCHAR	0	9999	","		10	pickup_type	""
+10	SQLCHAR	0	9999	","		11	drop_off_type	""
+11	SQLCHAR	0	9999	"\r\n"	12	shape_dist_traveled	""

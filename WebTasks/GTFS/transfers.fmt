@@ -1,0 +1,6 @@
+8.0
+4
+1	SQLCHAR	0	9999	","		1	from_stop_id		""
+2	SQLCHAR	0	9999	","		2	to_stop_id			""
+3	SQLCHAR	0	9999	","		3	transfer_type		""
+4	SQLCHAR	0	9999	"\r\n"	4	min_transfer_time	""

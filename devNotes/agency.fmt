@@ -1,0 +1,8 @@
+9.0
+6
+1	SQLCHAR	0	9999	"\""	0	first_quote		""
+2	SQLCHAR	0	9999	"\","	2	agency_name		""
+3	SQLCHAR	0	9999	","		3	agency_url		""
+4	SQLCHAR	0	9999	","		4	agency_timezone	""
+5	SQLCHAR	0	9999	","		5	agency_lang		""
+6	SQLCHAR	0	9999	"\r\n"	6	agency_phone	""

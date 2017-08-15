@@ -17,7 +17,7 @@
 	</cfswitch>
 </cffunction>
 <!--- Loaded via ajax or include to show departureTimes table --->
-<cfsetting showdebugoutput="true" />
+<cfsetting showdebugoutput="false" />
 <cfsetting requesttimeout="12" />
 <!--- set to 12s as safeguard against runaway recursive function. This page gets really slow, though :(  --->
 

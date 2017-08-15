@@ -1,0 +1,6 @@
+8.0
+4
+1	SQLCHAR	0	9999	","		1	shape_id		""
+2	SQLCHAR	0	9999	","		2	shape_pt_lat	""
+3	SQLCHAR	0	9999	","		3	shape_pt_lon	""
+4	SQLCHAR	0	9999	"\r\n"	4	shape_pt_sequence	""

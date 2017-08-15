@@ -1,3 +1,5 @@
+<cfsetting showdebugoutput="false">
+
 <cfset opType="LRT Schedule" />
 <cfif isDefined('url.fromStop')><cfset opType="Bus Stop Schedule" />
 <cfelseif isDefined('url.rid')><cfset opType="Bus Routes" />
@@ -904,7 +906,7 @@ function updateArrivalTimes() {
 		thisDate = thisDate.replace('-', '/');
 		thisDate = thisDate.replace('.0', '');
 
-		var date1 = new Date(thisDate)
+		var date1 = new Date(thisDate);
 		var dateNow = new Date();
 		var day = 1;
 
