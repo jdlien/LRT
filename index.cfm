@@ -4,7 +4,7 @@
 <cfif isDefined('url.fromStop')><cfset opType="Bus Stop Schedule" />
 <cfelseif isDefined('url.rid')><cfset opType="Bus Routes" />
 </cfif>
-<cfset PageTitle="Edmonton #opType#">
+<cfset PageTitle="#opType#">
 <cfset PageTitleHead="#opType#" />
 
 <!--- Toggle Dark Mode --->
@@ -61,8 +61,17 @@
 	<!-- Page contents go below here -->
     
 	<link href="/Javascript/selectize/dist/css/selectize.css" type="text/css" rel="stylesheet" />
-  
-    <cfoutput><cfif len(PageTitle)><div class="pageTitle">#PageTitle#</div></cfif></cfoutput>
+
+<div class="pageTitle">
+<svg id="eplLogo" width="143" height="38" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg" preserveAspectRatio="xMinYMin">
+  <path id="eplWordmark" d="m64.75716,24.93909c0.113,2.558 1.363,3.723 3.608,3.723c1.62,0 2.927,-0.994 3.182,-1.904l3.552,0c-1.14,3.467 -3.557,4.945 -6.88,4.945c-4.63,0 -7.5,-3.185 -7.5,-7.73c0,-4.403 3.04,-7.756 7.5,-7.756c5,0 7.415,4.21 7.13,8.728l-10.589,0l-0.003,-0.006zm6.566,-2.55c-0.37,-2.046 -1.25,-3.126 -3.21,-3.126c-2.558,0 -3.296,1.99 -3.354,3.13l6.564,0l0,-0.004zm6.42,-5.767l3.835,0l0,1.874l0.057,0c0.966,-1.563 2.557,-2.273 4.375,-2.273c4.603,0 6.678,3.728 6.678,7.9c0,3.92 -2.16,7.59 -6.45,7.59c-1.762,0 -3.438,-0.77 -4.404,-2.216l-0.052,0l0,6.99l-4.035,0l0,-19.871l-0.004,0.006zm10.91,7.386c0,-2.33 -0.938,-4.745 -3.524,-4.745c-2.642,0 -3.494,2.36 -3.494,4.75s0.91,4.66 3.523,4.66c2.643,0 3.495,-2.273 3.495,-4.66l0,-0.005zm6.562,-12.986l4.034,0l0,20.287l-4.034,0l0,-20.293l0,0.006zm7.386,15.913l4.46,0l0,4.375l-4.46,0l0,-4.375zm17.73,-5.143c-0.257,-1.647 -1.31,-2.53 -2.984,-2.53c-2.585,0 -3.438,2.615 -3.438,4.774c0,2.103 0.824,4.632 3.353,4.632c1.87,0 2.95,-1.193 3.21,-2.982l3.89,0c-0.51,3.892 -3.21,6.023 -7.076,6.023c-4.432,0 -7.416,-3.127 -7.416,-7.53c0,-4.575 2.73,-7.956 7.5,-7.956c3.467,0 6.65,1.82 6.905,5.57l-3.95,0l0.006,-0.001zm6.135,-0.653c0.227,-3.78 3.608,-4.916 6.903,-4.916c2.928,0 6.45,0.658 6.45,4.18l0,7.646c0,1.335 0.143,2.67 0.512,3.267l-4.09,0c-0.143,-0.454 -0.257,-0.936 -0.285,-1.42c-1.278,1.335 -3.154,1.82 -4.944,1.82c-2.79,0 -5,-1.394 -5,-4.406c0,-3.324 2.5,-4.12 5,-4.46c2.47,-0.37 4.77,-0.284 4.77,-1.933c0,-1.733 -1.195,-1.99 -2.615,-1.99c-1.536,0 -2.53,0.627 -2.673,2.22l-4.034,0l0.006,-0.008zm9.32,2.983c-0.683,0.596 -2.104,0.624 -3.354,0.852c-1.256,0.257 -2.39,0.683 -2.39,2.16c0,1.505 1.163,1.875 2.47,1.875c3.154,0 3.27,-2.5 3.27,-3.38l0,-1.513l0.004,0.006z" />
+  <path d="m12.82716,1.75409l7.322,0l0,29.534l-7.327,0l0.005,-29.534z" fill="#7AC143"/>
+  <path d="m23.84816,1.75409l7.323,0l0,29.534l-7.32,0l-0.003,-29.534z" fill="#E50E63"/>
+  <path d="m34.87016,1.75409l7.32,0l0,29.534l-7.32,0l0,-29.534z" fill="#7D4199"/>
+  <path d="m45.89216,1.75409l7.322,0l0,29.534l-7.322,0l0,-29.534z" fill="#009DDC"/>
+  <path d="m1.80516,1.75409l7.322,0l0,29.534l-7.322,0l0,-29.534z" fill="#FDBB30"/>
+</svg>  
+<cfoutput><span class="nowrap">#PageTitle#</span></cfoutput></div>
 
 
 
@@ -72,7 +81,24 @@
 		padding:4px 6px; /* Needed for mobile safari to make the dropdowns not too tiny */
 	}
 
+	.pageTitle {
 
+	}
+
+	#eplLogo {
+		/*float:left;*/
+		margin-right:8px;
+		height:100%;
+		vertical-align:bottom;
+	}
+
+	#eplWordmark {
+		fill:#004B8D;
+	}
+
+	.darkMode #eplWordmark {
+		fill:white;
+	}
 
 	/* Style to handle selectize dropdowns */
 	.w2Form .selectizeLabel * {
@@ -572,7 +598,7 @@
 	SELECT * FROM vsd.ETS_stops
 </cfquery>
 <!--- This makes for a massive 6500 item select --->
-<label for="fromStop" id="fromStopLabel" class="selectizeLabel"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest Four Stops</span></a>
+<label for="fromStop" id="fromStopLabel" class="selectizeLabel"><a href="javascript:void(0);" id="departLabelText" title="Click to sort stops based on your location">Bus Stops <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 960"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest Four Stops</span></a>
 	<select name="fromStop" id="fromStop" class="selectizeField" multiple="multiple">
 		<cfoutput query="Stops">
 			<option value="#stop_id#" <cfif listContains(url.fromStop, stop_id)>selected</cfif>>#stop_id# #stop_name#</option>
@@ -617,7 +643,7 @@
 <cfelse>
 
 
-<label for="from" style="margin-bottom:0;"><a href="javascript:void(0);" id="departLabelText" title="Click to set based on your location">Departing From <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 900"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest</span></a>
+<label for="from" style="margin-bottom:0;"><a href="javascript:void(0);" id="departLabelText" title="Click to set based on your location">Departing From <svg id="geoIcon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 960"><path d="M500 258.6l-490 245 9.6 1.2c5.2.5 107 8.2 226 16.8 133 9.8 217.5 16.5 218.8 18 1.2 1.2 8.3 87 18 219.6 8.5 119.7 16.4 221.3 17 226 1.3 7.7 6.3-1.8 246-482 135-269.4 245-490 244.6-489.7l-490 245z" /></svg><span id="nearestLink">Set Nearest</span></a>
 	<select name="from" id="from">
 		<cfoutput query="Stations">
 			<option value="#StationID#" <cfif isDefined('url.from') AND url.from IS StationID>selected</cfif>>#StationName#</option>
