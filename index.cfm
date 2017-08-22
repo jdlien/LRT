@@ -1145,7 +1145,7 @@ function toggleDarkMode() {
 	$('body').toggleClass('darkMode');
 	if (getCookie('LRT_DARK') === "true") {
 		setCookie('LRT_DARK', "false");
-		$('#nightModeLink a').html('Night Mode');
+		$('#nightModeLink a').html('&#x1F31C; Night Mode');
 	}
 	else {
 		setCookie('LRT_DARK', "true");
