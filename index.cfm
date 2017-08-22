@@ -1207,7 +1207,7 @@ $('#nightModeLink a').click(function(){
 				.darkMode #bc_core_external,
 				.darkMode #bccms_footer,
 				.darkMode #bccms_footer #footer_container {
-					background-color:black;
+					background-color:#111;
 					color:white;
 				}
 
